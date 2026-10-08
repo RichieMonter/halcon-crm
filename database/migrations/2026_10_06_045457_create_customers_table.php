@@ -9,10 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->id('customer_number');
-            $table->string('company_name');
-            $table->text('fiscal_data')->nullable();
-            $table->text('delivery_address');
+            $table->id('customer_number'); // Clave primaria
+            $table->string('name');                      // Nombre del contacto principal
+            $table->string('email')->nullable();         // Correo de contacto
+            $table->string('phone')->nullable();         // Teléfono de contacto
+            $table->text('address')->nullable();         // Dirección fiscal/de contacto
+            $table->text('delivery_address');            // Dirección de entrega
+            
+            // Datos fiscales SAT
+            $table->string('company_name')->nullable();  // Razón Social
+            $table->string('rfc', 13)->nullable();       // RFC
+            $table->string('tax_regime')->nullable();    // Régimen Fiscal
+            
             $table->timestamps();
         });
     }

@@ -44,9 +44,22 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'username' => 'required|string|unique:users,username|max:255',
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:users,username',
+                // Exige al menos letras o números reales y permite guiones/puntos/guion bajo
+                'regex:/^(?=.*[a-zA-Z0-9])[a-zA-Z0-9._\-]+$/'
+            ],
             'password' => 'required|string|min:6|confirmed',
             'role_id'  => 'required|exists:roles,id',
+        ], [
+            'username.regex' => 'El nombre de usuario solo puede contener letras, números, puntos, guiones y debe incluir al menos un carácter alfanumérico.',
+            'username.unique' => 'El nombre de usuario ya se encuentra registrado.',
+            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
+            'password.confirmed' => 'La confirmación de la contraseña no coincide.',
+            'role_id.required' => 'Debes seleccionar un rol para el usuario.',
         ]);
 
         $user = User::create([

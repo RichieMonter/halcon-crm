@@ -12,8 +12,13 @@ class Customer extends Model
     protected $primaryKey = 'customer_number';
 
     protected $fillable = [
-        'company_name',
-        'fiscal_data',
+        'name',
+        'email',
+        'phone',
+        'address',
         'delivery_address',
+        'company_name',
+        'rfc',
+        'tax_regime',
     ];
 }

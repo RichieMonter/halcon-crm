@@ -1,40 +1,80 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-2xl mx-auto bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
-    <h1 class="text-2xl font-bold text-white mb-6">Registrar Nuevo Cliente</h1>
+<div class="max-w-4xl mx-auto p-6 bg-slate-800 text-white rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-6">Nuevo Cliente</h2>
 
     @if ($errors->any())
-        <div class="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-lg mb-6 text-sm">
-            <ul>
+        <div class="bg-red-600 text-white p-4 rounded mb-6">
+            <ul class="list-disc pl-5">
                 @foreach ($errors->all() as $error)
-                    <li>• {{ $error }}</li>
+                    <li>{{ $error }}</li>
                 @endforeach
             </ul>
         </div>
     @endif
 
-    <form action="{{ route('customers.store') }}" method="POST" class="space-y-4">
+    <form action="{{ route('customers.store') }}" method="POST" novalidate>
         @csrf
-        <div>
-            <label class="block text-sm font-medium mb-1 text-slate-300">Nombre de la Empresa</label>
-            <input type="text" name="company_name" value="{{ old('company_name') }}" required class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 text-slate-100">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block mb-1">Nombre de Contacto *</label>
+                <input type="text" name="name" value="{{ old('name') }}" required 
+                       class="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block mb-1">Correo Electrónico *</label>
+                <input type="email" name="email" value="{{ old('email') }}" required 
+                       class="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block mb-1">Teléfono</label>
+                <input type="text" name="phone" value="{{ old('phone') }}" 
+                       placeholder="+52 5512345678"
+                       class="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block mb-1">Razón Social / Empresa</label>
+                <input type="text" name="company_name" value="{{ old('company_name') }}" 
+                       class="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block mb-1">RFC</label>
+                <input type="text" name="rfc" value="{{ old('rfc') }}" maxlength="13" 
+                       oninput="this.value = this.value.toUpperCase()" 
+                       placeholder="XAXX010101000"
+                       class="w-full bg-slate-700 p-2 rounded text-white uppercase border border-slate-600 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block mb-1">Régimen Fiscal *</label>
+                <select name="tax_regime" required class="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none focus:border-blue-500">
+                    <option value="">Seleccionar régimen fiscal</option>
+                    <option value="601" {{ old('tax_regime') == '601' ? 'selected' : '' }}>601 - General de Ley Personas Morales</option>
+                    <option value="612" {{ old('tax_regime') == '612' ? 'selected' : '' }}>612 - Personas Físicas con Actividades Empresariales</option>
+                    <option value="626" {{ old('tax_regime') == '626' ? 'selected' : '' }}>626 - Régimen Simplificado de Confianza (RESICO)</option>
+                </select>
+            </div>
         </div>
-        <div>
-            <label class="block text-sm font-medium mb-1 text-slate-300">Datos Fiscales (RFC, Razón Social, etc.)</label>
-            <textarea name="fiscal_data" rows="3" class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 text-slate-100">{{ old('fiscal_data') }}</textarea>
+
+        <div class="mb-4">
+            <label class="block mb-1">Dirección Particular / Fiscal</label>
+            <textarea name="address" rows="2" class="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none focus:border-blue-500">{{ old('address') }}</textarea>
         </div>
-        <div>
-            <label class="block text-sm font-medium mb-1 text-slate-300">Dirección de Entrega</label>
-            <textarea name="delivery_address" rows="3" required class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 text-slate-100">{{ old('delivery_address') }}</textarea>
+
+        <div class="mb-6">
+            <label class="block mb-1">Dirección de Entrega</label>
+            <textarea name="delivery_address" rows="2" class="w-full bg-slate-700 p-2 rounded text-white border border-slate-600 focus:outline-none focus:border-blue-500">{{ old('delivery_address') }}</textarea>
         </div>
-        <div class="flex justify-end space-x-3 pt-4">
-            <a href="{{ route('customers.index') }}" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors">
-                Cancelar
-            </a>
-            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-colors">
-                Guardar Cliente
-            </button>
+
+        <div class="flex justify-end gap-3">
+            <a href="{{ route('customers.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Cancelar</a>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold">Crear Cliente</button>
         </div>
     </form>
 </div>
