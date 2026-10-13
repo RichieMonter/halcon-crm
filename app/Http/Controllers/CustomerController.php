@@ -38,7 +38,8 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
-        $validated = $this->validateCustomer($request, $customer->customer_number);
+        // CORREGIDO: Se cambia customer_number por id
+        $validated = $this->validateCustomer($request, $customer->id);
 
         if (!empty($validated['rfc'])) {
             $validated['rfc'] = strtoupper($validated['rfc']);
@@ -69,7 +70,6 @@ class CustomerController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Una sola regla estricta: bloquea símbolos raros tanto en la cuenta como en el dominio
                 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
             ],
             'phone' => [
@@ -98,7 +98,8 @@ class CustomerController extends Controller
                 'nullable',
                 'string',
                 'regex:/^([A-ZÑ&]{3,4})([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])([A-Z0-9]{3})$/i',
-                'unique:customers,rfc,' . $customerId . ',customer_number',
+                // CORREGIDO: Se cambia customer_number por id
+                'unique:customers,rfc,' . $customerId . ',id',
             ],
             'tax_regime' => 'required|string',
         ], [

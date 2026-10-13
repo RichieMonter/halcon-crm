@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->id('customer_number'); // Clave primaria
+            $table->id(); // Clave primaria
             $table->string('name');                      // Nombre del contacto principal
             $table->string('email')->nullable();         // Correo de contacto
             $table->string('phone')->nullable();         // Teléfono de contacto
