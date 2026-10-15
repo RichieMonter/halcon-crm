@@ -1,100 +1,138 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro - Halcón System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-8">
-        <h1 class="text-2xl font-bold text-center text-indigo-400 mb-6">Crear Cuenta</h1>
+<x-guest-layout>
+    <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200/80 p-8 sm:p-10 transition-all duration-300">
         
-        @if ($errors->any())
-            <div class="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-lg mb-6 text-sm">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>• {{ $error }}</li>
-                    @endforeach
-                </ul>
+        <!-- Logo y Encabezado Minimalista -->
+        <div class="text-center mb-7">
+            <div class="inline-flex items-center justify-center mb-3 transition-transform duration-300 hover:scale-105">
+                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-2 border border-slate-200/70 shadow-sm flex items-center justify-center">
+                    <img src="{{ asset('images/logo.png') }}" alt="Papelería KOPION" class="w-full h-full object-contain">
+                </div>
             </div>
-        @endif
+            
+            <div class="mb-2">
+                <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold bg-slate-900 text-blue-400 tracking-wider shadow-sm border border-slate-800">
+                    KOPION CRM
+                </span>
+            </div>
 
-        <form action="{{ route('register') }}" method="POST" class="space-y-4">
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Crear Cuenta</h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">Regístrate para acceder al sistema de Papelería KOPION</p>
+        </div>
+
+        <form method="POST" action="{{ route('register') }}" class="space-y-4">
             @csrf
-            <div>
-                <label class="block text-sm font-medium mb-1">Nombre de Usuario</label>
-                <input type="text" name="username" value="{{ old('username') }}" required class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 text-slate-100">
-            </div>
 
+            <!-- Name -->
             <div>
-                <label class="block text-sm font-medium mb-1">Departamento / Rol</label>
-                <select name="role_id" required class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 text-slate-100">
-                    <option value="" disabled selected>Selecciona un rol</option>
-                    @foreach ($roles as $role)
-                        <option value="{{ $role->id }}">{{ $role->department_name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium mb-1">Contraseña</label>
+                <label for="name" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nombre Completo
+                </label>
                 <div class="relative">
-                    <input type="password" id="password" name="password" required class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 text-slate-100 pr-10">
-                    <button type="button" onclick="togglePassword('password', this)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 focus:outline-none">
-                        <svg class="eye-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.573 16.49 16.638 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        <svg class="eye-off-icon w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                        </svg>
-                    </button>
+                    </span>
+                    <input id="name" 
+                           type="text" 
+                           name="name" 
+                           value="{{ old('name') }}" 
+                           required 
+                           autofocus 
+                           autocomplete="name" 
+                           placeholder="Tu nombre completo"
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition" />
                 </div>
+                <x-input-error :messages="$errors->get('name')" class="mt-1.5 text-xs text-red-600" />
             </div>
 
+            <!-- Email Address -->
             <div>
-                <label class="block text-sm font-medium mb-1">Confirmar Contraseña</label>
+                <label for="email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Correo Electrónico
+                </label>
                 <div class="relative">
-                    <input type="password" id="password_confirmation" name="password_confirmation" required class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 text-slate-100 pr-10">
-                    <button type="button" onclick="togglePassword('password_confirmation', this)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 focus:outline-none">
-                        <svg class="eye-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.573 16.49 16.638 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
                         </svg>
-                        <svg class="eye-off-icon w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                        </svg>
-                    </button>
+                    </span>
+                    <input id="email" 
+                           type="email" 
+                           name="email" 
+                           value="{{ old('email') }}" 
+                           required 
+                           autocomplete="username" 
+                           placeholder="nombre@ejemplo.com"
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition" />
                 </div>
+                <x-input-error :messages="$errors->get('email')" class="mt-1.5 text-xs text-red-600" />
             </div>
 
-            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-colors mt-2">
-                Registrarse
-            </button>
+            <!-- Password -->
+            <div>
+                <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Contraseña
+                </label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </span>
+                    <input id="password" 
+                           type="password" 
+                           name="password" 
+                           required 
+                           autocomplete="new-password" 
+                           placeholder="••••••••"
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition" />
+                </div>
+                <x-input-error :messages="$errors->get('password')" class="mt-1.5 text-xs text-red-600" />
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+                <label for="password_confirmation" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Confirmar Contraseña
+                </label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </span>
+                    <input id="password_confirmation" 
+                           type="password" 
+                           name="password_confirmation" 
+                           required 
+                           autocomplete="new-password" 
+                           placeholder="••••••••"
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition" />
+                </div>
+                <x-input-error :messages="$errors->get('password_confirmation')" class="mt-1.5 text-xs text-red-600" />
+            </div>
+
+            <!-- Botón de Registro -->
+            <div class="pt-2">
+                <button type="submit" 
+                        class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 flex items-center justify-center space-x-2 group">
+                    <span>Registrarse</span>
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </button>
+            </div>
         </form>
 
-        <p class="mt-6 text-center text-sm text-slate-400">
-            ¿Ya tienes cuenta? <a href="{{ route('login') }}" class="text-indigo-400 hover:underline">Inicia sesión</a>
-        </p>
+        <!-- Login -->
+        <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+            <p class="text-xs text-slate-500">
+                ¿Ya tienes una cuenta? 
+                <a href="{{ route('login') }}" class="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline ml-1">
+                    Inicia sesión aquí
+                </a>
+            </p>
+        </div>
     </div>
-
-    <script>
-        function togglePassword(inputId, btn) {
-            const input = document.getElementById(inputId);
-            const eyeIcon = btn.querySelector('.eye-icon');
-            const eyeOffIcon = btn.querySelector('.eye-off-icon');
-
-            if (input.type === "password") {
-                input.type = "text";
-                eyeIcon.classList.add('hidden');
-                eyeOffIcon.classList.remove('hidden');
-            } else {
-                input.type = "password";
-                eyeIcon.classList.remove('hidden');
-                eyeOffIcon.classList.add('hidden');
-            }
-        }
-    </script>
-</body>
-</html>
+</x-guest-layout>

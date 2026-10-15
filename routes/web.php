@@ -1,33 +1,29 @@
 <?php
 
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-// Redirección inicial al login
 Route::get('/', function () {
-    return redirect()->route('login');
+    return auth()->check() ? redirect()->route('orders.index') : redirect()->route('login');
 });
 
-// Rutas de Autenticación (Huéspedes - Sin iniciar sesión)
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-});
+Route::get('/dashboard', function () {
+    return redirect()->route('orders.index');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-// Rutas Protegidas (Usuarios Autenticados)
-Route::middleware('auth')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    
-    // Módulos del Sistema
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Módulos del Sistema CRM
     Route::resource('customers', CustomerController::class);
     Route::resource('products', ProductController::class);
-    
-    // Rutas protegidas para el seguimiento de ventas / cotizaciones
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
 });
+
+require __DIR__.'/auth.php';

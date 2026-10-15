@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halcón System - Catálogo e Inventario</title>
+    <title>Kopion CRM - Catálogo e Inventario</title>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>[x-cloak] { display: none !important; }</style>
@@ -25,10 +25,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
-            <span class="font-bold tracking-wider text-sm md:text-base">PAPELERÍA N / HALCÓN SYSTEM</span>
+            <span class="font-bold tracking-wider text-sm md:text-base text-blue-400">KOPION CRM</span>
         </div>
 
         <div class="flex items-center space-x-4">
+            @auth
+                <span class="hidden md:inline text-xs text-gray-300 bg-slate-800 px-2.5 py-1 rounded border border-slate-700">{{ Auth::user()->name }}</span>
+            @endauth
             <form action="{{ route('logout') }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded transition">Cerrar Sesión</button>
