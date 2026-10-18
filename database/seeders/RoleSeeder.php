@@ -2,22 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $roles = [
-            'Administrador',
-            'Ventas',
-            'Soporte',
-            'Gerencia',
-        ];
-
-        foreach ($roles as $role) {
-            Role::firstOrCreate(['department_name' => $role]);
-        }
+        DB::table('roles')->insert([
+            ['id' => 1, 'department_name' => 'Administrador'],
+            ['id' => 2, 'department_name' => 'Editor'],
+            ['id' => 3, 'department_name' => 'Colaborador'],
+            ['id' => 4, 'department_name' => 'Usuario Final'],
+        ]);
     }
 }

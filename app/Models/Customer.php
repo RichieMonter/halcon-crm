@@ -9,7 +9,7 @@ class Customer extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'customer_number';
+    protected $table = 'customers';
 
     protected $fillable = [
         'name',
@@ -19,6 +19,11 @@ class Customer extends Model
         'delivery_address',
         'company_name',
         'rfc',
-        'tax_regime',
+        'tax_regime'
     ];
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'customer_id', 'id');
+    }
 }
