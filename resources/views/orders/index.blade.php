@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halcón System - Dashboard</title>
+    <title>Kopion CRM - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>[x-cloak] { display: none !important; }</style>
@@ -29,7 +29,10 @@
         </div>
 
         <div class="flex items-center space-x-4">
-            <span class="font-bold tracking-wider text-sm md:text-base">PAPELERÍA N / HALCÓN SYSTEM</span>
+            <span class="font-bold tracking-wider text-sm md:text-base text-blue-400">KOPION CRM</span>
+            @auth
+                <span class="hidden md:inline text-xs text-gray-300 bg-slate-800 px-2.5 py-1 rounded border border-slate-700">{{ Auth::user()->name }}</span>
+            @endauth
             <form action="{{ route('logout') }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded transition">Cerrar Sesión</button>
@@ -43,7 +46,7 @@
         <ul class="space-y-2">
             <li><a href="{{ route('orders.index') }}" class="block px-3 py-2 rounded bg-blue-600 font-semibold text-sm">📊 Dashboard (Inicio)</a></li>
             <li><a href="{{ route('customers.index') }}" class="block px-3 py-2 rounded hover:bg-slate-700 text-sm text-gray-300">👥 Gestión de Clientes</a></li>
-            <li><a href="#" class="block px-3 py-2 rounded hover:bg-slate-700 text-sm text-gray-300">🛒 Punto de Venta (Wireframe 3)</a></li>
+            <li><a href="{{ route('products.index') }}" class="block px-3 py-2 rounded hover:bg-slate-700 text-sm text-gray-300">📦 Catálogo e Inventario</a></li>
         </ul>
     </div>
 
