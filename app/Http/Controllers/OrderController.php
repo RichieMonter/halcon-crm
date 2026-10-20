@@ -13,8 +13,8 @@ class OrderController extends Controller
     public function index()
     {
         // 1. Ventas del día
-        $todaySales = Order::whereDate('created_at', Carbon::today())->sum('total_amount');
-        $yesterdaySales = Order::whereDate('created_at', Carbon::yesterday())->sum('total_amount');
+        $todaySales = Order::whereDate('created_at', Carbon::today())->sum('total');
+        $yesterdaySales = Order::whereDate('created_at', Carbon::yesterday())->sum('total');
         
         $percentageVsYesterday = 0;
         if ($yesterdaySales > 0) {
@@ -22,7 +22,7 @@ class OrderController extends Controller
         }
 
         // 2. Pedidos en proceso
-        $pendingOrdersCount = Order::where('current_status', 'PENDIENTE')->count();
+        $pendingOrdersCount = Order::where('status', 'PENDIENTE')->count();
 
         // 3. Obtener cotizaciones y clientes
         $orders = Order::with('customer', 'user')->latest()->get();
@@ -54,15 +54,14 @@ class OrderController extends Controller
         $folio = 'COT-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
 
         Order::create([
+            'order_number' => $folio,
             'invoice_number' => $folio,
             'customer_id' => $request->customer_id,
             'created_by_user_id' => Auth::id() ?? 1,
             'order_type' => $request->order_type ?? 'Cotización General',
-            'total_amount' => 0.00,
-            'interest_level' => $request->interest_level,
-            'last_contact_date' => Carbon::now()->toDateString(),
-            'current_status' => 'PENDIENTE',
-            'notes' => null,
+            'total' => 0.00,
+            'interest_level' => $request->interest_level, // <-- Aquí viaja directo tu nivel de interés
+            'status' => 'pendiente',
         ]);
 
         return redirect()->route('orders.index')->with('success', '¡Cotización ' . $folio . ' creada exitosamente!');

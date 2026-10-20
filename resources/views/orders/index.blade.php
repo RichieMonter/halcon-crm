@@ -65,14 +65,14 @@
             <!-- Ventas del Día -->
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                 <h3 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Ventas del Día</h3>
-                <p class="text-2xl font-black text-gray-900 mt-2">$ {{ number_format($todaySales, 2) }}</p>
+                <p class="text-2xl font-black text-gray-900 mt-2">$ {{ number_format($todaySales ?? 0, 2) }}</p>
                 <p class="text-xs text-gray-400 mt-2 font-semibold">Sin ventas registradas hoy</p>
             </div>
 
             <!-- Pedidos en Proceso -->
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                 <h3 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Pedidos en Proceso</h3>
-                <p class="text-2xl font-black text-blue-600 mt-2">Pendientes: {{ $pendingOrdersCount }}</p>
+                <p class="text-2xl font-black text-blue-600 mt-2">Pendientes: {{ $pendingOrdersCount ?? 0 }}</p>
                 <p class="text-xs text-gray-400 mt-2">Sincronizado con cotizaciones</p>
             </div>
 
@@ -125,21 +125,22 @@
                         @forelse($orders as $order)
                             <tr class="hover:bg-gray-50 transition">
                                 <td class="py-3 px-4 font-bold text-gray-800">
-                                    <span class="text-indigo-600 font-extrabold block text-xs">#{{ $order->invoice_number }}</span>
+                                    <span class="text-indigo-600 font-extrabold block text-xs">#{{ $order->invoice_number ?? $order->order_number }}</span>
                                     {{ $order->customer->company_name ?? ($order->customer->name ?? 'Cliente General') }}
                                 </td>
                                 <td class="py-3 px-4 text-gray-600">{{ $order->order_type }}</td>
-                                <td class="py-3 px-4 font-bold text-gray-900">${{ number_format($order->total_amount, 2) }}</td>
+                                <td class="py-3 px-4 font-bold text-gray-900">${{ number_format($order->total, 2) }}</td>
                                 <td class="py-3 px-4">
-                                    <span class="px-2.5 py-1 text-xs font-bold rounded-full 
-                                        {{ $order->interest_level == 'ALTO' ? 'bg-red-100 text-red-700 border border-red-200' : ($order->interest_level == 'MEDIO' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200') }}">
-                                        {{ $order->interest_level }}
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                        {{ $order->interest_level ?? 'MEDIO' }}
                                     </span>
                                 </td>
-                                <td class="py-3 px-4 text-gray-500 text-xs">{{ $order->last_contact_date }}</td>
+                                <td class="py-3 px-4 text-gray-500 text-xs">
+                                    {{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : '' }}
+                                </td>
                                 <td class="py-3 px-4">
                                     <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                                        {{ $order->current_status }}
+                                        {{ ucfirst($order->status ?? 'completado') }}
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 text-center">

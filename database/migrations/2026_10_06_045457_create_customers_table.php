@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('email')->nullable();         // Correo de contacto
             $table->string('phone')->nullable();         // Teléfono de contacto
             $table->text('address')->nullable();         // Dirección fiscal/de contacto
-            $table->text('delivery_address');            // Dirección de entrega
+            $table->text('delivery_address')->nullable(); // Dirección de delivery
             
             // Datos fiscales SAT
             $table->string('company_name')->nullable();  // Razón Social

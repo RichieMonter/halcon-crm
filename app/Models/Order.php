@@ -10,24 +10,32 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'invoice_number',
         'customer_id',
         'created_by_user_id',
         'order_type',
-        'total_amount',
+        'order_number',
+        'invoice_number',
+        'subtotal',
+        'discount',
+        'total',
+        'status',
+        'service_notes',
         'interest_level',
-        'last_contact_date',
-        'current_status',
-        'notes'
     ];
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+        return $this->belongsTo(Customer::class);
     }
 
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    // <-- Agregamos la relación que el controlador de tu amigo estaba exigiendo
     public function user()
     {
-        return $this->belongsTo(User::class, 'created_by_user_id', 'id');
+        return $this->belongsTo(User::class, 'created_by_user_id');
     }
 }
