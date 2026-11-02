@@ -7,9 +7,19 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $customers = Customer::latest()->paginate(10);
+        $search = $request->input('search');
+
+        $customers = Customer::when($search, function($query, $search) {
+            return $query->where('name', 'LIKE', "%{$search}%")
+                         ->orWhere('company_name', 'LIKE', "%{$search}%")
+                         ->orWhere('rfc', 'LIKE', "%{$search}%")
+                         ->orWhere('email', 'LIKE', "%{$search}%");
+        })
+        ->orderBy('name')
+        ->get();
+
         return view('customers.index', compact('customers'));
     }
 
@@ -20,15 +30,24 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $this->validateCustomer($request);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:customers,email',
+            'phone' => 'nullable|string|max:50',
+            'company_name' => 'nullable|string|max:255',
+            'rfc' => 'nullable|string|max:13|unique:customers,rfc',
+            'tax_regime' => 'nullable|string|max:10',
+            'address' => 'nullable|string',
+            'delivery_address' => 'nullable|string',
+        ]);
 
-        if (!empty($validated['rfc'])) {
-            $validated['rfc'] = strtoupper($validated['rfc']);
+        if (empty($validated['company_name'])) {
+            $validated['company_name'] = 'NA';
         }
 
         Customer::create($validated);
 
-        return redirect()->route('customers.index')->with('success', 'Cliente creado correctamente.');
+        return redirect()->route('customers.index')->with('success', '¡Cliente registrado correctamente!');
     }
 
     public function edit(Customer $customer)
@@ -38,81 +57,29 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
-        // CORREGIDO: Se cambia customer_number por id
-        $validated = $this->validateCustomer($request, $customer->id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:customers,email,' . $customer->id,
+            'phone' => 'nullable|string|max:50',
+            'company_name' => 'nullable|string|max:255',
+            'rfc' => 'nullable|string|max:13|unique:customers,rfc,' . $customer->id,
+            'tax_regime' => 'nullable|string|max:10',
+            'address' => 'nullable|string',
+            'delivery_address' => 'nullable|string',
+        ]);
 
-        if (!empty($validated['rfc'])) {
-            $validated['rfc'] = strtoupper($validated['rfc']);
+        if (empty($validated['company_name'])) {
+            $validated['company_name'] = 'NA';
         }
 
         $customer->update($validated);
 
-        return redirect()->route('customers.index')->with('success', 'Cliente actualizado correctamente.');
+        return redirect()->route('customers.index')->with('success', '¡Datos actualizados con éxito!');
     }
 
     public function destroy(Customer $customer)
     {
         $customer->delete();
-
-        return redirect()->route('customers.index')->with('success', 'Cliente eliminado correctamente.');
-    }
-
-    private function validateCustomer(Request $request, $customerId = null)
-    {
-        return $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ])[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.\,\-]+$/'
-            ],
-            'email' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
-            ],
-            'phone' => [
-                'nullable',
-                'regex:/^\+?[0-9\s\-]{7,15}$/'
-            ],
-            'company_name' => [
-                'nullable',
-                'string',
-                'max:255',
-                'regex:/^(?=.*[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.\,\&\-]+$/'
-            ],
-            'address' => [
-                'nullable',
-                'string',
-                'max:500',
-                'regex:/^(?=.*[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.\,\#\-\/]+$/'
-            ],
-            'delivery_address' => [
-                'nullable',
-                'string',
-                'max:500',
-                'regex:/^(?=.*[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.\,\#\-\/]+$/'
-            ],
-            'rfc' => [
-                'nullable',
-                'string',
-                'regex:/^([A-ZÑ&]{3,4})([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])([A-Z0-9]{3})$/i',
-                // CORREGIDO: Se cambia customer_number por id
-                'unique:customers,rfc,' . $customerId . ',id',
-            ],
-            'tax_regime' => 'required|string',
-        ], [
-            'name.regex' => 'El nombre de contacto debe contener letras reales y no solo símbolos.',
-            'email.required' => 'El correo electrónico es obligatorio.',
-            'email.regex' => 'El correo electrónico introducido no tiene un formato válido (ej. usuario@dominio.com).',
-            'company_name.regex' => 'La Razón Social debe incluir letras o números válidos.',
-            'address.regex' => 'La dirección debe ser un domicilio válido.',
-            'delivery_address.regex' => 'La dirección de entrega debe ser un domicilio válido.',
-            'phone.regex' => 'El teléfono solo permite números, espacios, guiones y el símbolo +.',
-            'rfc.regex' => 'El RFC debe tener exactamente 12 caracteres (Moral) o 13 caracteres (Física) con formato SAT válido.',
-            'rfc.unique' => 'Ya existe un cliente registrado con este RFC.',
-            'tax_regime.required' => 'Debes seleccionar un régimen fiscal.',
-        ]);
+        return redirect()->route('customers.index')->with('success', 'Cliente eliminado.');
     }
 }

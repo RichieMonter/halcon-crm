@@ -11,16 +11,27 @@ use Illuminate\Support\Facades\DB;
 
 class PosController extends Controller
 {
-    public function index()
+    public function index(Order $order)
     {
-        $products = Product::where('status', true)->get();
-        $customers = Customer::orderBy('name')->get();
+        $order->load('customer', 'items.product');
 
-        return view('pos.index', compact('products', 'customers'));
+        // Solo productos y servicios (excluyendo insumos internos)
+        $products = Product::whereIn('type', ['PRODUCTO', 'SERVICIO'])->get();
+        $customers = Customer::orderBy('name')->get();
+        $categories = Product::whereNotNull('category')->distinct()->pluck('category');
+
+        // Modo estático si la orden ya está completada
+        $isReadOnly = ($order->status === 'completado');
+
+        return view('pos.index', compact('order', 'products', 'categories', 'customers', 'isReadOnly'));
     }
 
-    public function store(Request $request)
+    public function update(Request $request, Order $order)
     {
+        if ($order->status === 'completado') {
+            return response()->json(['success' => false, 'message' => 'Esta orden ya está completada y no se puede modificar.'], 403);
+        }
+
         $request->validate([
             'customer_id' => 'nullable|exists:customers,id',
             'cart' => 'required|array|min:1',
@@ -43,18 +54,16 @@ class PosController extends Controller
             $discount = $request->discount ?? 0;
             $total = max(0, $subtotal - $discount);
 
-            // Generar número de orden único
-            $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(uniqid());
-
-            $order = Order::create([
+            $order->update([
                 'customer_id' => $request->customer_id,
-                'order_number' => $orderNumber,
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'total' => $total,
                 'status' => $request->status,
                 'service_notes' => $request->service_notes,
             ]);
+
+            $order->items()->delete();
 
             foreach ($request->cart as $item) {
                 OrderItem::create([
@@ -65,9 +74,8 @@ class PosController extends Controller
                     'subtotal' => $item['price'] * $item['quantity'],
                 ]);
 
-                // Descontar stock solo si el producto maneja inventario
                 $product = Product::find($item['id']);
-                if ($product && $product->type !== 'SERVICIO') {
+                if ($product && $product->type !== 'SERVICIO' && $request->status === 'completado') {
                     $product->decrement('stock', $item['quantity']);
                 }
             }
@@ -76,7 +84,7 @@ class PosController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Venta registrada con éxito',
+                'message' => '¡Venta procesada con éxito!',
                 'order_id' => $order->id,
             ]);
 
@@ -84,7 +92,7 @@ class PosController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Error al procesar la venta: ' . $e->getMessage(),
+                'message' => 'Error al procesar: ' . $e->getMessage(),
             ], 500);
         }
     }

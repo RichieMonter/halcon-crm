@@ -5,6 +5,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,10 +26,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
 
     // Módulo de Punto de Venta (POS) / Carrito
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
+
+
+    //Modulo Pantalla de venta
+    Route::get('/orders/{order}/pos', [PosController::class, 'index'])->name('orders.pos');
+    Route::post('/orders/{order}/pos', [PosController::class, 'update'])->name('orders.pos.update');
+
+    // Buscador Global
+    Route::get('/search', [SearchController::class, 'globalSearch'])->name('search.global');
 });
 
 require __DIR__.'/auth.php';
