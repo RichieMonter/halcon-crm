@@ -11,8 +11,12 @@
                 <p class="text-2xl font-black text-gray-900 mt-2">$ {{ number_format($todaySales ?? 0, 2) }}</p>
             </div>
             <div class="mt-3 flex items-center justify-between text-xs">
-                @if($percentageVsYesterday > 0)
+                @if($percentageVsYesterday === null)
+                    <span class="text-gray-500">Sin ventas ayer</span>
+                @elseif($percentageVsYesterday > 0)
                     <span class="text-emerald-600 font-bold">▲ +{{ number_format($percentageVsYesterday, 1) }}% vs ayer</span>
+                @elseif($percentageVsYesterday < 0)
+                    <span class="text-red-700 font-bold">{{ number_format($percentageVsYesterday, 1) }}% vs ayer</span>
                 @else
                     <span class="text-gray-400">±0% vs ayer</span>
                 @endif
@@ -45,7 +49,7 @@
                     @forelse($lowStockProducts ?? [] as $prod)
                         <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
                             <div class="flex justify-between text-xs text-gray-800 font-bold mb-1">
-                                <span class="truncate pr-2" title="{{ $prod->name }}">{{ $prod->name }}</span>
+                                <span class="truncate pr-2" title="{{ $prod->name }}">{{ $prod->name }} · {{ $prod->type === 'INSUMO' ? 'Insumo' : 'Producto' }}</span>
                                 <span class="text-red-600 whitespace-nowrap">{{ $prod->stock }} pzas</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-1.5">
@@ -85,6 +89,8 @@
         </div>
 
     </div>
+
+    @include('orders.charts')
 
     <!-- TABLA COMPLETA DE COTIZACIONES -->
     <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6" x-data="{ openModal: false, editModal: false, currentOrder: {} }">

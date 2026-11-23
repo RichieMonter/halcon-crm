@@ -26,12 +26,9 @@ class OrderController extends Controller
                                 ->whereDate('updated_at', Carbon::yesterday())
                                 ->sum('total');
         
-        $percentageVsYesterday = 0;
-        if ($yesterdaySales > 0) {
-            $percentageVsYesterday = (($todaySales - $yesterdaySales) / $yesterdaySales) * 100;
-        } elseif ($todaySales > 0) {
-            $percentageVsYesterday = 100;
-        }
+        $percentageVsYesterday = $yesterdaySales > 0
+            ? (($todaySales - $yesterdaySales) / $yesterdaySales) * 100
+            : null;
     
         $completedOrdersCount = Order::where('status', 'completado')
                                      ->whereDate('updated_at', Carbon::today())
@@ -39,11 +36,14 @@ class OrderController extends Controller
     
         $pendingOrdersCount = Order::where('status', 'pendiente')->count();
     
-        $lowStockProducts = Product::where('type', 'PRODUCTO')
-                                   ->where(function($query) {
-                                       $query->whereColumn('stock', '<=', 'min_stock')
-                                             ->orWhere('stock', '<=', 5);
-                                   })->get();
+        $lowStockProducts = Product::whereIn('type', ['PRODUCTO', 'INSUMO'])
+            ->where(function ($query) {
+                $query->whereColumn('stock', '<=', 'min_stock')
+                    ->orWhere('stock', '<=', 5);
+            })
+            ->orderBy('stock')
+            ->orderBy('name')
+            ->get();
     
         $topProductsList = OrderItem::select('product_id', DB::raw('SUM(quantity) as total_sold'))
             ->whereHas('order', function($q) {
@@ -77,6 +77,7 @@ class OrderController extends Controller
             'orders', 
             'customers', 
             'todaySales', 
+            'yesterdaySales',
             'percentageVsYesterday', 
             'completedOrdersCount',
             'pendingOrdersCount', 
