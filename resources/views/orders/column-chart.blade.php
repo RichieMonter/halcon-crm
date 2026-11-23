@@ -1,12 +1,12 @@
 @php
     $peak = collect($rows)->flatMap(fn ($row) => $row['values'])->max() ?? 0;
-    $step = max(1, ceil($peak / 4));
+    $step = isset($maximum) ? $maximum / 4 : max(1, ceil($peak / 4));
     $ceiling = 4 * $step;
     $colors = array_values($series);
     $names = array_keys($series);
 @endphp
 
-<figure class="min-w-0 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+<figure class="min-w-0 {{ ($compact ?? false) ? 'p-4' : 'rounded-xl border border-gray-200 bg-white p-5 shadow-sm' }}">
     <figcaption>
         <h2 class="font-bold text-slate-900">{{ $title }}</h2>
         <p class="mb-5 text-xs text-gray-500">{{ $unit }}</p>
@@ -33,7 +33,7 @@
                         <div class="relative min-w-0 flex-1 text-center">
                             <div aria-hidden="true" class="flex h-40 items-end justify-center gap-1 px-2">
                                 @foreach ($row['values'] as $index => $value)
-                                    <div class="w-full max-w-8 rounded-t-sm" style="height: {{ 100 * max(0, $value) / $ceiling }}%; background-color: {{ $colors[$index] }}"></div>
+                                    <div class="w-full max-w-8 rounded-t-sm" style="height: {{ 100 * max(0, $value) / $ceiling }}%; background-color: {{ $row['color'] ?? $colors[$index] }}"></div>
                                 @endforeach
                             </div>
                             <div class="px-1 pb-2 pt-2 text-[11px] leading-tight text-slate-700">
@@ -43,8 +43,11 @@
                                 @endisset
                                 <span class="mt-1 flex flex-wrap justify-center gap-x-1 font-semibold tabular-nums">
                                     @foreach ($row['values'] as $index => $value)
-                                        <span style="color: {{ $colors[$index] }}">
-                                            <span class="sr-only">{{ $names[$index] }} </span>{{ number_format($value, $decimals ?? 0) }}
+                                        <span style="color: {{ $row['color'] ?? $colors[$index] }}">
+                                            @unless(isset($row['color']))
+                                                <span class="sr-only">{{ $names[$index] }} </span>
+                                            @endunless
+                                            {{ number_format($value, $decimals ?? 0) }}{{ $suffix ?? '' }}
                                         </span>
                                     @endforeach
                                 </span>

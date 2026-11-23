@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\MarketingCampaign;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
@@ -20,7 +22,64 @@ class CustomerController extends Controller
         ->orderBy('name')
         ->get();
 
-        return view('customers.index', compact('customers'));
+        $topCustomers = Customer::rankedByPurchases()->limit(5)->get();
+        $campaigns = MarketingCampaign::orderByDesc('starts_on')->orderByDesc('id')->paginate(8, ['*'], 'campanas')->withQueryString();
+        $audiences = MarketingCampaign::AUDIENCES;
+
+        return view('customers.index', compact('customers', 'topCustomers', 'campaigns', 'audiences'));
+    }
+
+    public function storeCampaign(Request $request)
+    {
+        MarketingCampaign::create($this->validateCampaign($request));
+
+        return redirect()->route('customers.index')->with('success', 'Campaña de temporada guardada.');
+    }
+
+    public function editCampaign(MarketingCampaign $campaign)
+    {
+        return view('customers.campaign-edit', ['campaign' => $campaign, 'audiences' => MarketingCampaign::AUDIENCES]);
+    }
+
+    public function updateCampaign(Request $request, MarketingCampaign $campaign)
+    {
+        $campaign->update($this->validateCampaign($request));
+
+        return redirect()->route('customers.index')->with('success', 'Campaña actualizada.');
+    }
+
+    public function endCampaign(MarketingCampaign $campaign)
+    {
+        $ended = MarketingCampaign::active()->whereKey($campaign->id)->update(['ended_at' => now()]);
+
+        return $ended
+            ? redirect()->route('customers.index')->with('success', 'Campaña terminada. Ya no se sugiere en el carrito.')
+            : redirect()->route('customers.index')->with('error', 'Solo puedes terminar antes una campaña activa.');
+    }
+
+    public function destroyCampaign(MarketingCampaign $campaign)
+    {
+        $campaign->delete();
+
+        return redirect()->route('customers.index')->with('success', 'Campaña eliminada.');
+    }
+
+    private function validateCampaign(Request $request): array
+    {
+        return $request->validateWithBag('campaign', [
+            'name' => 'required|string|max:120',
+            'starts_on' => 'required|date_format:Y-m-d',
+            'ends_on' => 'required|date_format:Y-m-d|after_or_equal:starts_on',
+            'audience' => ['required', Rule::in(array_keys(MarketingCampaign::AUDIENCES))],
+            'discount_percent' => 'required|numeric|between:1,100|decimal:0,2',
+        ], [
+            'starts_on.date_format' => 'Ingresa una fecha de inicio válida.',
+            'ends_on.date_format' => 'Ingresa una fecha de fin válida.',
+            'ends_on.after_or_equal' => 'La fecha de fin debe ser igual o posterior al inicio.',
+            'discount_percent.between' => 'El descuento debe estar entre 1 y 100 %.',
+            'discount_percent.decimal' => 'El descuento admite hasta dos decimales.',
+        ], ['starts_on' => 'fecha de inicio', 'ends_on' => 'fecha de fin', 'audience' => 'público', 'discount_percent' => 'descuento']);
+
     }
 
     public function create()
@@ -39,6 +98,7 @@ class CustomerController extends Controller
             'tax_regime' => 'nullable|string|max:10',
             'address' => 'nullable|string',
             'delivery_address' => 'nullable|string',
+            'preferred_discount' => 'nullable|numeric|between:0,100|decimal:0,2',
         ]);
 
         if (empty($validated['company_name'])) {
@@ -66,6 +126,7 @@ class CustomerController extends Controller
             'tax_regime' => 'nullable|string|max:10',
             'address' => 'nullable|string',
             'delivery_address' => 'nullable|string',
+            'preferred_discount' => 'nullable|numeric|between:0,100|decimal:0,2',
         ]);
 
         if (empty($validated['company_name'])) {

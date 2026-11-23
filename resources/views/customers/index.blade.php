@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
+@include('customers.insights')
+
 <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 mb-6 border-b border-gray-100 gap-4">
         <div>

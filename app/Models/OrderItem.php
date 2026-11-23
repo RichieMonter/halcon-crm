@@ -15,6 +15,9 @@ class OrderItem extends Model
         'quantity',
         'unit_price',
         'subtotal',
+        'printer',
+        'print_mode',
+        'printed_at',
     ];
 
     public function order()

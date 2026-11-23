@@ -77,6 +77,8 @@
             <textarea name="delivery_address" rows="2" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">{{ old('delivery_address') }}</textarea>
         </div>
 
+        @include('customers.discount-field', ['preferredDiscount' => null])
+
         <div class="pt-4 flex justify-end gap-3 border-t border-gray-100">
             <a href="{{ route('customers.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition">Cancelar</a>
             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow transition">Guardar Cliente</button>

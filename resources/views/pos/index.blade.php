@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6"
-     x-data="posApp({{ json_encode($products) }}, {{ json_encode($order) }}, {{ $isReadOnly ? 'true' : 'false' }})">
+     x-data="posApp(@js($products), @js($order), @js($isReadOnly), @js($printers), @js($recommendations))">
     
     <!-- ENCABEZADO -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 mb-6 border-b border-gray-100 gap-4">
@@ -63,7 +63,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Cliente:</label>
-                    <select x-model="selectedCustomerId" :disabled="isReadOnly" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm">
+                    <select x-model="selectedCustomerId" @change="clearSuggestedDiscount()" :disabled="isReadOnly" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm">
                         @foreach($customers as $cust)
                             <option value="{{ $cust->id }}">{{ ($cust->company_name && strtoupper($cust->company_name) !== 'NA') ? $cust->company_name : $cust->name }}</option>
                         @endforeach
@@ -90,6 +90,25 @@
                                     <td class="p-2">
                                         <p class="font-bold text-gray-800" x-text="item.name"></p>
                                         <p class="text-[10px] text-gray-400">$<span x-text="parseFloat(item.price).toFixed(2)"></span> c/u</p>
+                                        <div x-show="item.isPrinting" class="mt-2 space-y-1">
+                                            <label class="block text-xs">Impresora
+                                                <select x-model="item.printer" @change="item.print_mode = printers[item.printer]?.colors.length === 1 ? 'mono' : ''" :disabled="isReadOnly" class="mt-1 block w-full rounded border p-1">
+                                                    <option value="">Selecciona una impresora</option>
+                                                    <template x-for="(printer, key) in printers" :key="key">
+                                                        <option :value="key" :selected="key === item.printer" x-text="printer.name"></option>
+                                                    </template>
+                                                </select>
+                                            </label>
+                                            <label x-show="printers[item.printer]?.colors.length > 1" class="block text-xs">Tipo de impresión
+                                                <select x-model="item.print_mode" :disabled="isReadOnly" class="mt-1 block w-full rounded border p-1">
+                                                    <option value="">Selecciona un tipo</option>
+                                                    <option value="mono">Blanco y negro</option>
+                                                    <option value="color">A color</option>
+                                                </select>
+                                            </label>
+                                            <p class="text-[10px] text-slate-600">La cantidad equivale a páginas impresas.</p>
+                                            <button type="button" x-show="!isReadOnly" @click="addToCart(products.find(product => product.id === item.id), true)" class="text-[10px] font-semibold text-indigo-700 hover:underline">+ Otra línea de impresión</button>
+                                        </div>
                                     </td>
                                     <td class="p-2 text-right font-bold text-gray-900">
                                         $<span x-text="(item.price * item.quantity).toFixed(2)"></span>
@@ -121,14 +140,41 @@
                         <span class="font-bold">$<span x-text="iva.toFixed(2)"></span></span>
                     </div>
                     <div class="flex justify-between text-gray-600 items-center" x-show="!isReadOnly">
-                        <span>Descuento ($):</span>
-                        <input type="number" step="0.01" min="0" x-model.number="discount" @input="updateTotals()" class="w-20 border rounded px-1.5 py-0.5 text-right font-bold">
+                        <label for="discount-percent">Descuento (%)</label>
+                        <input id="discount-percent" type="number" step="0.01" min="0" max="100" x-model.number="discountPercent" @input="suggestionApplied = false; updateTotals()" @change="discountPercent = Math.min(100, Math.max(0, Number(discountPercent) || 0)); updateTotals()" class="w-20 border rounded px-1.5 py-0.5 text-right font-bold">
+                    </div>
+                    <div class="flex justify-between text-gray-600" x-show="discountAmount > 0">
+                        <span>Importe descontado</span>
+                        <span class="font-bold">−$<span x-text="discountAmount.toFixed(2)"></span></span>
                     </div>
                     <div class="flex justify-between text-base font-extrabold text-gray-900 border-t pt-1.5">
                         <span>TOTAL:</span>
                         <span class="text-indigo-600">$<span x-text="total.toFixed(2)"></span></span>
                     </div>
                 </div>
+
+                @unless ($isReadOnly)
+                    <aside x-show="customerRecommendations.length > 0" x-cloak class="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                        <h3 class="text-sm font-bold text-amber-900"><span aria-hidden="true">💡</span> Descuentos sugeridos</h3>
+                        <template x-for="suggestion in customerRecommendations" :key="suggestion.label">
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-amber-900">
+                                <span x-text="suggestion.label + ' · ' + suggestion.percent + ' %'"></span>
+                                <button type="button" @click="applySuggestedDiscount(suggestion.percent)" class="rounded border border-amber-300 bg-white px-2 py-1 font-semibold">Aplicar</button>
+                            </div>
+                        </template>
+                    </aside>
+
+                    <label for="payment-method" class="block text-sm font-semibold text-slate-800">Método de pago
+                        <select id="payment-method" x-model="paymentMethod" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-sm">
+                            <option value="">Selecciona al finalizar la venta</option>
+                            @foreach ($paymentMethods as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                @else
+                    <p class="text-sm text-slate-700"><strong>Método de pago:</strong> {{ $paymentMethods[$order->payment_method] ?? 'Sin registro' }}</p>
+                @endunless
 
                 <div class="grid grid-cols-2 gap-2" x-show="!isReadOnly">
                     <button @click="submitPos('pendiente')" class="w-full bg-amber-500 text-white font-bold text-xs py-2.5 rounded-lg shadow">Guardar Pendiente</button>
@@ -140,15 +186,21 @@
 </div>
 
 <script>
-function posApp(products, initialOrder, isReadOnly) {
+function posApp(products, initialOrder, isReadOnly, printers, recommendations) {
     return {
         products: products,
+        printers: printers,
         search: '',
         selectedCategory: '',
         selectedCustomerId: initialOrder ? initialOrder.customer_id : '',
+        paymentMethod: '',
+        suggestionApplied: false,
         serviceNotes: initialOrder ? initialOrder.service_notes : '',
         cart: [],
-        discount: initialOrder ? parseFloat(initialOrder.discount || 0) : 0,
+        discountPercent: Number(initialOrder.discount_percent ?? (Number(initialOrder.subtotal) > 0
+            ? (100 * Number(initialOrder.discount) / Number(initialOrder.subtotal)).toFixed(2)
+            : 0)),
+        discountAmount: 0,
         subtotal: 0,
         iva: 0,
         total: 0,
@@ -164,7 +216,10 @@ function posApp(products, initialOrder, isReadOnly) {
                         price: parseFloat(item.unit_price),
                         quantity: parseInt(item.quantity),
                         stock: prodMatch ? prodMatch.stock : 9999,
-                        type: prodMatch ? prodMatch.type : 'PRODUCTO'
+                        type: prodMatch ? prodMatch.type : 'PRODUCTO',
+                        isPrinting: Boolean(prodMatch?.is_printing || item.printer),
+                        printer: item.printer ?? '',
+                        print_mode: item.print_mode ?? ''
                     };
                 });
             }
@@ -179,8 +234,26 @@ function posApp(products, initialOrder, isReadOnly) {
             });
         },
 
-        addToCart(product) {
-            if (this.isReadOnly) return;
+        get customerRecommendations() {
+            return recommendations[this.selectedCustomerId] ?? [];
+        },
+
+        applySuggestedDiscount(percent) {
+            this.discountPercent = percent;
+            this.suggestionApplied = true;
+            this.updateTotals();
+        },
+
+        clearSuggestedDiscount() {
+            if (this.suggestionApplied) {
+                this.discountPercent = 0;
+                this.suggestionApplied = false;
+                this.updateTotals();
+            }
+        },
+
+        addToCart(product, separateLine = false) {
+            if (this.isReadOnly || !product) return;
             
             // Validación estricta para no rebasar el stock disponible
             if (product.type !== 'SERVICIO') {
@@ -191,7 +264,7 @@ function posApp(products, initialOrder, isReadOnly) {
                 }
             }
 
-            const existing = this.cart.find(item => item.id === product.id);
+            const existing = separateLine ? null : this.cart.find(item => item.id === product.id);
             if (existing) {
                 existing.quantity++;
             } else {
@@ -201,7 +274,10 @@ function posApp(products, initialOrder, isReadOnly) {
                     price: parseFloat(product.price), 
                     quantity: 1, 
                     stock: product.stock, 
-                    type: product.type 
+                    type: product.type,
+                    isPrinting: product.is_printing,
+                    printer: '',
+                    print_mode: ''
                 });
             }
             this.updateTotals();
@@ -226,24 +302,46 @@ function posApp(products, initialOrder, isReadOnly) {
 
         updateTotals() {
             const rawSubtotal = this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            this.total = Math.max(0, rawSubtotal - this.discount);
+            const subtotalCents = Math.round((rawSubtotal + Number.EPSILON) * 100);
+            const percentage = Math.min(100, Math.max(0, Number(this.discountPercent) || 0));
+            const discountCents = Math.round(subtotalCents * Math.round(percentage * 100) / 10000);
+            this.discountAmount = this.isReadOnly
+                ? Number(initialOrder.discount || 0)
+                : discountCents / 100;
+            this.total = this.isReadOnly ? Number(initialOrder.total) : (subtotalCents - discountCents) / 100;
             this.subtotal = this.total / 1.16;
             this.iva = this.total - this.subtotal;
         },
 
         submitPos(status) {
             if (this.cart.length === 0 || this.isReadOnly) return;
+            if (status === 'completado' && !this.paymentMethod) {
+                alert('Selecciona el método de pago para finalizar la venta.');
+                return;
+            }
+            if (status === 'completado' && this.cart.some(item => item.isPrinting && (!item.printer || !item.print_mode))) {
+                alert('Elige la impresora y el tipo de impresión para cada servicio de impresión.');
+                return;
+            }
 
             fetch(`/orders/${initialOrder.id}/pos`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
                     customer_id: this.selectedCustomerId,
-                    cart: this.cart,
-                    discount: this.discount,
+                    cart: this.cart.map(item => ({
+                        id: item.id,
+                        quantity: item.quantity,
+                        price: item.price,
+                        printer: item.printer || null,
+                        print_mode: item.print_mode || null
+                    })),
+                    discount_percent: this.discountPercent || 0,
+                    payment_method: this.paymentMethod || null,
                     service_notes: this.serviceNotes,
                     status: status
                 })
@@ -256,7 +354,8 @@ function posApp(products, initialOrder, isReadOnly) {
                 } else {
                     alert('Error: ' + data.message);
                 }
-            });
+            })
+            .catch(() => alert('No se pudo contactar al servidor para guardar la venta.'));
         }
     }
 }

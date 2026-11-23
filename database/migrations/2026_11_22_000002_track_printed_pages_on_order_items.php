@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('order_items', function (Blueprint $table) {
+            $table->string('printer', 30)->nullable();
+            $table->string('print_mode', 12)->nullable();
+            $table->dateTime('printed_at', 6)->nullable();
+            $table->index(['printer', 'printed_at']);
+        });
+
+        Schema::table('printer_readings', function (Blueprint $table) {
+            $table->dateTime('captured_at', 6)->nullable();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('order_items', function (Blueprint $table) {
+            $table->dropIndex(['printer', 'printed_at']);
+            $table->dropColumn(['printer', 'print_mode', 'printed_at']);
+        });
+
+        Schema::table('printer_readings', fn (Blueprint $table) => $table->dropColumn('captured_at'));
+    }
+};

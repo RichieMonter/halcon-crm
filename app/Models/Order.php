@@ -9,6 +9,13 @@ class Order extends Model
 {
     use HasFactory;
 
+    public const PAYMENT_METHODS = [
+        'efectivo' => 'Efectivo',
+        'transferencia' => 'Transferencia',
+        'debito' => 'Tarjeta de débito',
+        'credito' => 'Tarjeta de crédito',
+    ];
+
     protected $fillable = [
         'customer_id',
         'created_by_user_id',
@@ -17,6 +24,8 @@ class Order extends Model
         'invoice_number',
         'subtotal',
         'discount',
+        'discount_percent',
+        'payment_method',
         'total',
         'status',
         'service_notes',

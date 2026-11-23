@@ -136,7 +136,7 @@
                                 <a href="{{ route('orders.pos', $order->id) }}" class="text-indigo-600 font-extrabold block text-xs hover:underline">
                                     #{{ $order->invoice_number ?? $order->order_number }}
                                 </a>
-                                {{ ($order->customer->company_name && strtoupper($order->customer->company_name) !== 'NA') ? $order->customer->company_name : ($order->customer->name ?? 'Cliente General') }}
+                                {{ ($order->customer?->company_name && strtoupper($order->customer->company_name) !== 'NA') ? $order->customer->company_name : ($order->customer?->name ?? 'Cliente General') }}
                             </td>
                             <td class="py-3 px-4 text-gray-600">{{ $order->order_type }}</td>
                             <td class="py-3 px-4 font-bold text-gray-900">${{ number_format($order->total, 2) }}</td>
@@ -275,7 +275,6 @@
                         <label class="block text-xs font-bold text-gray-700 uppercase">Estatus</label>
                         <select name="status" x-model="currentOrder.status" class="mt-1 w-full border border-gray-300 rounded-lg p-2 text-sm">
                             <option value="pendiente">Pendiente</option>
-                            <option value="completado">Completado</option>
                             <option value="cancelado">Cancelado</option>
                         </select>
                     </div>
@@ -288,4 +287,5 @@
             </div>
         </div>
     </div>
+    @include('orders.printer-chart')
 @endsection

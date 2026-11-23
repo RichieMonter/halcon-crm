@@ -72,6 +72,11 @@
                     📦 Catálogo e Inventario
                 </a>
             </li>
+            <li>
+                <a href="{{ route('printers.index') }}" class="flex items-center px-3 py-2.5 rounded text-sm transition {{ request()->routeIs('printers.*') ? 'bg-blue-600 font-bold text-white shadow' : 'hover:bg-slate-700 text-gray-300' }}">
+                    <span aria-hidden="true" class="mr-1.5">🖨️</span> Predicción de tóner
+                </a>
+            </li>
         </ul>
     </div>
 
