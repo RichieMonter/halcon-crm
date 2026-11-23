@@ -5,12 +5,43 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class OrderDashboardFiltersTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_sales_chart_shows_seven_local_days_and_can_be_filtered(): void
+    {
+        $this->seed();
+        $this->actingAs(User::factory()->create(['role_id' => 1]));
+        $this->travelTo(CarbonImmutable::parse('2026-11-23 03:00:00', 'UTC'));
+
+        foreach ([
+            ['ANTES-MEDIANOCHE', 45, 'completado', '2026-11-22 05:59:59'],
+            ['DESPUES-MEDIANOCHE', 80, 'completado', '2026-11-22 06:00:00'],
+            ['PENDIENTE', 200, 'pendiente', '2026-11-22 12:00:00'],
+        ] as [$folio, $total, $status, $updatedAt]) {
+            $order = new Order(['order_number' => $folio, 'total' => $total, 'status' => $status]);
+            $order->updated_at = $updatedAt;
+            $order->save();
+        }
+
+        $this->get(route('orders.index'))
+            ->assertOk()->assertSee('Filtrar ventas')
+            ->assertViewHas('salesRows', fn ($rows) => count($rows) === 7
+                && $rows[0] === ['label' => '16/11', 'values' => [0.0]]
+                && $rows[5] === ['label' => '21/11', 'values' => [45.0]]
+                && $rows[6] === ['label' => '22/11', 'values' => [80.0]])
+            ->assertViewHas('todaySales', 80);
+
+        $this->get(route('orders.index', [
+            'ventas_desde' => '2026-11-21', 'ventas_hasta' => '2026-11-21', 'estado' => 'pendiente',
+        ]))->assertOk()->assertSee('Últimos 7 días')
+            ->assertViewHas('salesRows', [['label' => '21/11', 'values' => [45.0]]]);
+    }
 
     public function test_orders_can_be_found_by_customer_filtered_and_sorted_by_price(): void
     {

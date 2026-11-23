@@ -7,7 +7,7 @@
 </head>
 <body style="margin:0;background:#f1f5f9;color:#0f172a;font:16px Arial,sans-serif;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;">
-        <tr><td align="center" style="padding:20px;background:#0f172a;color:#60a5fa;font-weight:bold;">KOPION CRM</td></tr>
+        <tr><td align="center" style="padding:20px;background:#e1f5fc;color:#17556c;font-weight:bold;">KOPION CRM</td></tr>
         <tr><td align="center" style="padding:28px 12px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;">
                 <tr><td style="padding:28px;line-height:1.6;">
@@ -18,7 +18,7 @@
                         <p>{{ $line }}</p>
                     @endforeach
                     <p style="text-align:center;margin:24px 0;">
-                        <a href="{{ $actionUrl }}" style="display:inline-block;padding:12px 20px;border-radius:10px;background:#4f46e5;color:#fff;font-weight:bold;text-decoration:none;">{{ $actionText }}</a>
+                        <a href="{{ $actionUrl }}" style="display:inline-block;padding:12px 20px;border-radius:10px;background:#5cb9db;color:#1a3443;font-weight:bold;text-decoration:none;">{{ $actionText }}</a>
                     </p>
                     @foreach ($outroLines as $line)
                         <p>{{ $line }}</p>

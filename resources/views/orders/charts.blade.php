@@ -1,15 +1,6 @@
 @php
     $charts = [
-        [
-            'title' => 'Ventas del día',
-            'unit' => 'Importe en MXN',
-            'rows' => [
-                ['label' => 'Hoy', 'values' => [$todaySales]],
-                ['label' => 'Ayer', 'values' => [$yesterdaySales]],
-            ],
-            'series' => ['Ventas completadas' => '#5cb9db'],
-            'decimals' => 2,
-        ],
+        ['view' => 'orders.sales-chart'],
         [
             'title' => 'Productos más vendidos',
             'unit' => 'Unidades en ventas completadas',
@@ -56,7 +47,7 @@
     $lastPage = (int) ceil($chartCount / 2) - 1;
 @endphp
 
-<section class="mb-8" aria-labelledby="dashboard-charts-title"
+<section id="graficas" class="mb-8 scroll-mt-32" aria-labelledby="dashboard-charts-title"
     x-data="{ page: 0, get start() { return Math.min(this.page * 2, {{ $chartCount - 2 }}) } }">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 id="dashboard-charts-title" class="text-lg font-bold text-slate-900">Gráficas del dashboard</h2>

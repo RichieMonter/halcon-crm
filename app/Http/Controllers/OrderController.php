@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -27,6 +28,8 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
+        $salesToday = CarbonImmutable::today('America/Mexico_City');
+        $maxDate = $salesToday->toDateString();
         $filters = $request->validate([
             'search' => 'nullable|string|max:150',
             'estado' => 'nullable|in:pendiente,completado,cancelado',
@@ -35,31 +38,50 @@ class OrderController extends Controller
             'hasta' => ['nullable', 'date_format:Y-m-d', Rule::when($request->filled('desde'), 'after_or_equal:desde')],
             'orden' => ['nullable', Rule::in(array_keys(self::SORTABLE_COLUMNS))],
             'direccion' => 'nullable|in:asc,desc',
+            'ventas_desde' => ['nullable', 'required_with:ventas_hasta', 'date_format:Y-m-d', 'before_or_equal:'.$maxDate],
+            'ventas_hasta' => ['nullable', 'required_with:ventas_desde', 'date_format:Y-m-d', 'after_or_equal:ventas_desde', 'before_or_equal:'.$maxDate],
         ], [
             'desde.date_format' => 'Ingresa una fecha inicial válida.',
             'hasta.date_format' => 'Ingresa una fecha final válida.',
             'hasta.after_or_equal' => 'La fecha final debe coincidir con la inicial o ser posterior.',
+            'ventas_desde.required_with' => 'Selecciona la fecha inicial de ventas.',
+            'ventas_hasta.required_with' => 'Selecciona la fecha final de ventas.',
+            'ventas_desde.date_format' => 'Ingresa una fecha inicial de ventas válida.',
+            'ventas_hasta.date_format' => 'Ingresa una fecha final de ventas válida.',
+            'ventas_hasta.after_or_equal' => 'La fecha final de ventas debe coincidir con la inicial o ser posterior.',
+            'ventas_desde.before_or_equal' => 'La fecha inicial de ventas debe ser hoy o anterior.',
+            'ventas_hasta.before_or_equal' => 'La fecha final de ventas debe ser hoy o anterior.',
         ]);
+        $salesStart = isset($filters['ventas_desde'])
+            ? CarbonImmutable::parse($filters['ventas_desde'], $salesToday->timezone)->startOfDay()
+            : $salesToday->subDays(6);
+        $salesEnd = isset($filters['ventas_hasta'])
+            ? CarbonImmutable::parse($filters['ventas_hasta'], $salesToday->timezone)->startOfDay()
+            : $salesToday;
+        if ($salesStart->diffInDays($salesEnd) >= 31) {
+            throw ValidationException::withMessages(['ventas_hasta' => 'Selecciona un periodo de hasta 31 días.']);
+        }
+        $salesRows = $this->dailySales($salesStart, $salesEnd);
+        $salesFilters = array_intersect_key($filters, array_flip(['ventas_desde', 'ventas_hasta']));
         $sortColumns = self::SORTABLE_COLUMNS;
         $sort = $filters['orden'] ?? 'fecha';
         $direction = $filters['direccion'] ?? ($sort === 'fecha' ? 'desc' : 'asc');
     
         // Ventas del día y comparativa vs ayer
-        $todaySales = Order::where('status', 'completado')
-                            ->whereDate('updated_at', Carbon::today())
-                            ->sum('total');
-    
+        $completedToday = Order::where('status', 'completado')
+            ->where('updated_at', '>=', $salesToday->utc())
+            ->where('updated_at', '<', $salesToday->addDay()->utc());
+        $todaySales = (clone $completedToday)->sum('total');
         $yesterdaySales = Order::where('status', 'completado')
-                                ->whereDate('updated_at', Carbon::yesterday())
-                                ->sum('total');
+            ->where('updated_at', '>=', $salesToday->subDay()->utc())
+            ->where('updated_at', '<', $salesToday->utc())
+            ->sum('total');
         
         $percentageVsYesterday = $yesterdaySales > 0
             ? (($todaySales - $yesterdaySales) / $yesterdaySales) * 100
             : null;
     
-        $completedOrdersCount = Order::where('status', 'completado')
-                                     ->whereDate('updated_at', Carbon::today())
-                                     ->count();
+        $completedOrdersCount = $completedToday->count();
     
         $pendingOrdersCount = Order::where('status', 'pendiente')->count();
     
@@ -169,7 +191,11 @@ class OrderController extends Controller
             'direction',
             'customers', 
             'todaySales', 
-            'yesterdaySales',
+            'salesToday',
+            'salesStart',
+            'salesEnd',
+            'salesRows',
+            'salesFilters',
             'percentageVsYesterday', 
             'completedOrdersCount',
             'pendingOrdersCount', 
@@ -183,6 +209,30 @@ class OrderController extends Controller
             'suggestedFolio'
         ));
     }
+
+    private function dailySales(CarbonImmutable $start, CarbonImmutable $end): array
+    {
+        $query = Order::query()->where('status', 'completado')
+            ->where('updated_at', '>=', $start->utc())
+            ->where('updated_at', '<', $end->addDay()->utc());
+        $days = [];
+        for ($day = $start; $day <= $end; $day = $day->addDay()) {
+            $column = 'day_'.count($days);
+            $query->selectRaw(
+                'COALESCE(SUM(CASE WHEN updated_at >= ? AND updated_at < ? THEN total ELSE 0 END), 0) AS '.$column,
+                [$day->utc(), $day->addDay()->utc()],
+            );
+            $days[$column] = $day->format('d/m');
+        }
+        $totals = $query->toBase()->first();
+        $rows = [];
+        foreach ($days as $column => $label) {
+            $rows[] = ['label' => $label, 'values' => [(float) $totals->{$column}]];
+        }
+
+        return $rows;
+    }
+
     public function store(Request $request)
     {
         $request->validate([

@@ -1,23 +1,30 @@
 .kopion-glass {
-    color-scheme: dark;
+    color-scheme: light;
     --kopion-sky: #5cb9db;
     --kopion-gold: #f0b25f;
     --kopion-white: #fff;
     --kopion-rose: #f96a7c;
-    --kopion-text: var(--kopion-white);
-    --kopion-muted: #b4bec3;
-    --kopion-line: rgb(168 198 209 / 32%);
-    --kopion-shadow: 0 17px 42px rgb(0 0 0 / 44%);
+    --kopion-text: #1a3443;
+    --kopion-muted: #465e6b;
+    --kopion-line: #aec8d4;
+    --kopion-shadow: 0 17px 38px rgb(35 104 134 / 15%);
     min-height: 100vh;
     color: var(--kopion-text);
-    background-color: #0b0c0d;
+    background-color: var(--kopion-white);
+    isolation: isolate;
+}
+
+.kopion-glass::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image:
         radial-gradient(ellipse at 0% 15%, rgb(92 185 219 / 49%), transparent 40%),
         radial-gradient(ellipse at 100% 8%, rgb(240 178 95 / 42%), transparent 35%),
         radial-gradient(ellipse at 91% 58%, rgb(249 106 124 / 36%), transparent 39%),
         radial-gradient(ellipse at 2% 83%, rgb(92 185 219 / 32%), transparent 39%);
-    background-repeat: no-repeat;
-    background-size: 100% 85rem;
 }
 
 .kopion-glass main {
@@ -25,28 +32,47 @@
     padding-bottom: 2.75rem;
 }
 
-.kopion-glass .kopion-bar,
-.kopion-glass .kopion-sidebar {
-    background:
-        radial-gradient(ellipse at 35% 0%, rgb(92 185 219 / 32%), transparent 58%),
-        radial-gradient(ellipse at 94% 100%, rgb(240 178 95 / 24%), transparent 33%),
-        radial-gradient(ellipse at 102% 0%, rgb(249 106 124 / 32%), transparent 22%),
-        rgb(17 20 22 / 93%);
-    box-shadow: 0 9px 26px rgb(0 0 0 / 35%);
+.kopion-glass .kopion-bar {
+    background-color: #373734;
+    color: #f5f5f2;
+    box-shadow: 0 9px 26px rgb(38 99 128 / 15%);
     backdrop-filter: blur(18px) saturate(145%);
+}
+
+.kopion-glass .kopion-sidebar {
+    background-color: #373734;
+    box-shadow: 0 9px 26px rgb(38 99 128 / 15%);
+}
+
+.kopion-glass .kopion-sidebar a:not([aria-current="page"]) {
+    color: #f5f5f2;
+}
+
+.kopion-glass .kopion-sidebar a:not([aria-current="page"]):hover {
+    background-color: rgb(255 255 255 / 13%);
 }
 
 .kopion-glass .kopion-bar :is(input[type="search"], .kopion-identity) {
     border-color: var(--kopion-line);
-    background-color: rgb(7 15 19 / 75%);
+    background-color: rgb(255 255 255 / 88%);
+    color: var(--kopion-text);
 }
 
 .kopion-glass .kopion-bar .text-blue-400 {
     color: var(--kopion-sky);
 }
 
+.kopion-glass .kopion-bar button[aria-controls],
+.kopion-glass .kopion-bar > div > .text-slate-600 {
+    color: #f5f5f2;
+}
+
+.kopion-glass .kopion-bar button[aria-controls]:hover {
+    background-color: rgb(255 255 255 / 13%);
+}
+
 .kopion-glass main :is(section, article, figure, div, aside).bg-white {
-    background: rgb(255 255 255 / 12%);
+    background: rgb(255 255 255 / 81%);
     border-width: 0;
 }
 
@@ -54,7 +80,7 @@
     background:
         radial-gradient(ellipse at 104% -8%, rgb(92 185 219 / 25%), transparent 46%),
         radial-gradient(ellipse at 92% 116%, rgb(240 178 95 / 19%), transparent 38%),
-        linear-gradient(145deg, rgb(255 255 255 / 18%), rgb(10 16 20 / 72%));
+        linear-gradient(145deg, rgb(255 255 255 / 95%), rgb(245 252 255 / 86%));
     box-shadow: var(--kopion-shadow);
 }
 
@@ -65,8 +91,8 @@
     background:
         radial-gradient(ellipse at 108% 114%, var(--kopion-glow), transparent 67%),
         radial-gradient(ellipse at 0% 110%, rgb(249 106 124 / 25%), transparent 57%),
-        linear-gradient(145deg, rgb(255 255 255 / 19%), rgb(10 15 19 / 76%));
-    box-shadow: 0 19px 45px rgb(0 0 0 / 51%);
+        linear-gradient(145deg, rgb(255 255 255 / 98%), rgb(250 253 255 / 88%));
+    box-shadow: 0 19px 42px rgb(32 102 137 / 18%);
 }
 
 .kopion-glass main .kopion-metrics > .bg-white:nth-child(even),
@@ -99,7 +125,7 @@
 }
 
 .kopion-glass main :is(.bg-slate-50, .bg-gray-50, .bg-slate-100, .bg-gray-100) {
-    background-color: rgb(5 12 15 / 30%);
+    background-color: rgb(227 243 250 / 69%);
 }
 
 .kopion-glass main :is(div, section, figure, table, article):is(.bg-slate-50, .bg-gray-50),
@@ -108,20 +134,20 @@
 }
 
 .kopion-glass main :is(.bg-slate-200, .bg-gray-200, .bg-gray-300) {
-    background-color: #414c50;
+    background-color: #cce2eb;
 }
 
 .kopion-glass main :is(.border-gray-100, .border-gray-200, .border-slate-100, .border-slate-200, .border-slate-300) {
-    border-color: rgb(184 203 209 / 18%);
+    border-color: rgb(73 120 142 / 21%);
 }
 
 .kopion-glass main :is(.divide-gray-100, .divide-slate-100, .divide-slate-200) > :not([hidden]) ~ :not([hidden]) {
-    border-color: rgb(184 203 209 / 18%);
+    border-color: rgb(73 120 142 / 21%);
 }
 
 .kopion-glass main thead {
-    background-color: #293237;
-    color: #d8e7eb;
+    background-color: #e2f3fa;
+    color: #214657;
 }
 
 .kopion-glass main tr:hover {
@@ -130,11 +156,11 @@
 
 .kopion-glass .kopion-chart-value {
     color: var(--kopion-text);
-    color: color-mix(in srgb, var(--kopion-data-color), white 50%);
+    color: color-mix(in srgb, var(--kopion-data-color), #192f3c 57%);
 }
 
 .kopion-glass main :is(.text-indigo-600, .text-indigo-700, .text-blue-600, .text-blue-700) {
-    color: var(--kopion-sky);
+    color: #17647f;
 }
 
 .kopion-glass main :is(.text-slate-900, .text-slate-800, .text-gray-900, .text-gray-800, .text-gray-700) {
@@ -147,53 +173,54 @@
 }
 
 .kopion-glass main :is(.text-emerald-600, .text-emerald-700) {
-    color: #89dec1;
+    color: #1a634e;
 }
 
 .kopion-glass main :is(.text-red-600, .text-red-700, .text-red-800) {
-    color: #ff9eac;
+    color: #a12846;
 }
 
 .kopion-glass main :is(.text-amber-600, .text-amber-700, .text-amber-800, .text-amber-900) {
-    color: var(--kopion-gold);
+    color: #7b4615;
 }
 
 .kopion-glass main :is(.bg-red-50, .bg-red-100) {
-    background-color: #46252d;
-    border-color: #74414a;
-    color: #ffb4be;
+    background-color: #ffe7ec;
+    border-color: #f4a8b6;
+    color: #952640;
 }
 
 .kopion-glass main :is(.bg-amber-50, .bg-amber-100) {
-    background-color: #443321;
-    border-color: #725536;
-    color: #ffd3a0;
+    background-color: #fff0d7;
+    border-color: #efc48c;
+    color: #744216;
 }
 
 .kopion-glass main :is(.bg-emerald-50, .bg-emerald-100) {
-    background-color: #183c34;
-    border-color: #326553;
-    color: #a0e8d2;
+    background-color: #e2f8ef;
+    border-color: #a5d9c7;
+    color: #175b47;
 }
 
 .kopion-glass main :is(.bg-blue-50, .bg-blue-100, .bg-indigo-50) {
-    background-color: #203944;
-    border-color: #375c6d;
-    color: #a8e2f6;
+    background-color: #e1f5fc;
+    border-color: #abdce9;
+    color: #17556c;
 }
 
 .kopion-glass main :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="tel"], input[type="date"], input[type="number"], input[type="file"], select, textarea) {
-    background-color: rgb(12 18 22 / 87%);
+    background-color: rgb(255 255 255 / 96%);
     border-color: var(--kopion-line);
     color: var(--kopion-text);
 }
 
 .kopion-glass main :is(input, textarea)::placeholder {
-    color: #a2b3bc;
+    color: #526d7b;
 }
 
 .kopion-glass main :is(input, select, textarea):focus {
     border-color: var(--kopion-sky);
+    background-color: var(--kopion-white);
 }
 
 .kopion-glass main :is(input, select, textarea):disabled {
@@ -216,20 +243,20 @@
     color: #25170b;
 }
 
-.kopion-glass main button.bg-white,
-.kopion-glass main a.bg-white {
-    background-color: #28353b;
+.kopion-glass main :is(button, a):is(.bg-white, .bg-slate-800, .bg-slate-900, .bg-gray-800),
+.kopion-glass main span.bg-slate-900 {
+    background-color: #dcf3fc;
     border-color: var(--kopion-line);
     color: var(--kopion-text);
 }
 
 .kopion-glass main .fixed.bg-black.bg-opacity-50 {
-    background-color: rgb(0 0 0 / 65%);
+    background-color: rgb(195 224 238 / 66%);
     backdrop-filter: blur(4px);
 }
 
 .kopion-glass main .fixed .bg-white.shadow-2xl {
-    background-color: #20272b;
+    background: var(--kopion-white);
 }
 
 .kopion-glass :is(a, button, input, select, textarea):focus-visible {
@@ -243,11 +270,11 @@
     }
 
     .kopion-glass :is(button, a[class*="bg-"]):hover:not(:disabled) {
-        filter: brightness(1.16) saturate(1.23);
+        filter: brightness(.96) saturate(1.29);
     }
 
-    .kopion-glass main :is(button, a):is(.bg-white, .bg-gray-100, .bg-slate-100):hover:not(:disabled) {
-        background-color: #374b55;
+    .kopion-glass main :is(button, a):is(.bg-white, .bg-gray-100, .bg-slate-100, .bg-slate-800, .bg-slate-900, .bg-gray-800):hover:not(:disabled) {
+        background-color: #bee7f7;
         color: var(--kopion-text);
     }
 }
@@ -278,15 +305,11 @@
 
 @media (prefers-contrast: more) {
     .kopion-glass main :is(section, article, figure, div, aside).bg-white {
-        background: #181c1e;
+        background: var(--kopion-white);
     }
 }
 
 @media (max-width: 640px) {
-    .kopion-glass {
-        background-size: 100% 60rem;
-    }
-
     .kopion-glass main :is(.p-6, .p-8).bg-white {
         padding: 1rem;
     }

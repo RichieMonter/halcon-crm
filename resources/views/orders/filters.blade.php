@@ -8,6 +8,9 @@
     </div>
 
     <form action="{{ route('orders.index') }}#cotizaciones" method="GET" class="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        @foreach ($salesFilters as $field => $value)
+            <input type="hidden" name="{{ $field }}" value="{{ $value }}">
+        @endforeach
         <input type="hidden" name="orden" value="{{ $sort }}">
         <input type="hidden" name="direccion" value="{{ $direction }}">
         <label class="text-sm font-medium text-slate-700 xl:col-span-2">
@@ -43,7 +46,7 @@
         </label>
         <div class="flex flex-wrap items-center gap-2 sm:col-span-2 xl:col-span-6">
             <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Aplicar filtros</button>
-            <a href="{{ route('orders.index') }}#cotizaciones" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Limpiar filtros</a>
+            <a href="{{ route('orders.index', $salesFilters) }}#cotizaciones" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Limpiar filtros</a>
         </div>
     </form>
 

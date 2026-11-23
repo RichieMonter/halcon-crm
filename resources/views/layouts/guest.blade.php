@@ -21,7 +21,7 @@
     <body class="kopion-glass font-sans antialiased selection:bg-indigo-600 selection:text-white flex flex-col justify-between">
         
         <!-- Barra de Navegación Superior con la paleta de colores del CRM (Slate-900 / Blue-400) -->
-        <nav class="kopion-bar bg-slate-900 text-white px-6 py-3.5 flex justify-between items-center">
+        <nav class="kopion-bar px-6 py-3.5 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 rounded-lg bg-white p-0.5 flex items-center justify-center shadow-sm">
                     <img src="{{ asset('images/logo.png') }}" alt="Logo Kopion" class="w-full h-full object-contain">
@@ -29,8 +29,8 @@
                 <span class="font-extrabold tracking-wider text-base text-blue-400">KOPION CRM</span>
             </div>
             <div class="flex items-center space-x-2">
-                <span class="text-xs text-slate-400 font-medium hidden sm:inline">Papelería KOPION</span>
-                <span class="kopion-identity text-xs text-slate-300 bg-slate-800 px-2.5 py-1 rounded border border-slate-700">Punto de Venta</span>
+                <span class="text-xs text-slate-600 font-medium hidden sm:inline">Papelería KOPION</span>
+                <span class="kopion-identity text-xs px-2.5 py-1 rounded border">Punto de Venta</span>
             </div>
         </nav>
 
