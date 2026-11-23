@@ -11,6 +11,10 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
+    public const CUSTOMER_ROLE = 4;
+
+    public const STAFF_ROLES = [1 => 'Administrador', 2 => 'Editor', 3 => 'Colaborador'];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +26,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'role_id',
+        'customer_registration',
     ];
 
     /**
@@ -32,6 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'customer_registration',
     ];
 
     /**
@@ -44,11 +50,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'customer_registration' => 'array',
         ];
     }
 
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function homeRoute(): string
+    {
+        return (int) $this->role_id === self::CUSTOMER_ROLE ? 'portal.home' : 'orders.index';
+    }
+
+    public function roleLabel(): string
+    {
+        return self::STAFF_ROLES[$this->role_id] ?? 'Usuario Final';
     }
 }

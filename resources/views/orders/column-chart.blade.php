@@ -43,7 +43,7 @@
                                 @endisset
                                 <span class="mt-1 flex flex-wrap justify-center gap-x-1 font-semibold tabular-nums">
                                     @foreach ($row['values'] as $index => $value)
-                                        <span style="color: {{ $row['color'] ?? $colors[$index] }}">
+                                        <span class="kopion-chart-value" style="--kopion-data-color: {{ $row['color'] ?? $colors[$index] }}">
                                             @unless(isset($row['color']))
                                                 <span class="sr-only">{{ $names[$index] }} </span>
                                             @endunless

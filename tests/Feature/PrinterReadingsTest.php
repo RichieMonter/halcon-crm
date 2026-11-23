@@ -18,7 +18,7 @@ class PrinterReadingsTest extends TestCase
     public function test_a_refill_and_new_reading_update_the_module_and_dashboard(): void
     {
         $this->seed();
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->create(['role_id' => 3]));
 
         $this->get(route('printers.index'))
             ->assertOk()
@@ -59,7 +59,7 @@ class PrinterReadingsTest extends TestCase
     public function test_only_completed_print_sales_count_pages_and_reduce_consumables_once(): void
     {
         $this->seed();
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->create(['role_id' => 1]));
 
         $order = Order::create(['order_number' => 'IMP-001', 'status' => 'pendiente']);
         $customer = Customer::create(['name' => 'Cliente de impresión']);
@@ -152,7 +152,7 @@ class PrinterReadingsTest extends TestCase
     public function test_a_monochrome_printer_rejects_a_color_reading(): void
     {
         $this->seed();
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->create(['role_id' => 1]));
 
         $this->post(route('printers.readings.store', 'esca'), [
             'color' => 'magenta',

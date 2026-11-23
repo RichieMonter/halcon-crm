@@ -15,17 +15,17 @@
                 </span>
             </div>
 
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Crear Cuenta</h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">Regístrate para acceder al sistema de Papelería KOPION</p>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ $staffRoles ? 'Registrar personal' : 'Registrar nuevo cliente' }}</h1>
+            <p class="mt-1 text-sm text-slate-500">{{ $staffRoles ? 'Ingresa el código y selecciona tu rol.' : 'Completa tus datos generales y fiscales para crear tu cuenta.' }}</p>
         </div>
 
-        <form method="POST" action="{{ route('register') }}" class="space-y-4">
+        <form method="POST" action="{{ route($staffRoles ? 'staff.register' : 'register') }}" class="space-y-4">
             @csrf
 
             <!-- Name -->
             <div>
                 <label for="name" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Nombre Completo
+                    Nombre de contacto *
                 </label>
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
@@ -49,7 +49,7 @@
             <!-- Email Address -->
             <div>
                 <label for="email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Correo Electrónico
+                    Correo electrónico *
                 </label>
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
@@ -68,6 +68,34 @@
                 </div>
                 <x-input-error :messages="$errors->get('email')" class="mt-1.5 text-xs text-red-600" />
             </div>
+
+            @if ($staffRoles)
+                <div x-data="{ visible: false }">
+                    <label for="staff-code" class="mb-1 block text-xs font-semibold uppercase text-slate-700">Código de personal</label>
+                    <div class="flex gap-2">
+                        <input id="staff-code" name="staff_code" type="password" :type="visible ? 'text' : 'password'" inputmode="numeric"
+                            maxlength="4" pattern="[0-9]{4}" autocomplete="off" required
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4)"
+                            class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-sm">
+                        <button type="button" @click="visible = !visible" :aria-pressed="visible" aria-label="Mostrar u ocultar código"
+                            class="rounded-xl border border-slate-200 px-3 text-slate-700">
+                            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                        </button>
+                    </div>
+                    <x-input-error :messages="$errors->get('staff_code')" class="mt-1 text-xs text-red-600" />
+                </div>
+                <label class="block text-xs font-semibold uppercase text-slate-700">Rol del personal
+                    <select name="role_id" required class="mt-1 block w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-sm">
+                        <option value="">Selecciona un rol</option>
+                        @foreach ($staffRoles as $id => $role)
+                            <option value="{{ $id }}" @selected((string) old('role_id') === (string) $id)>{{ $role }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <x-input-error :messages="$errors->get('role_id')" class="mt-1 text-xs text-red-600" />
+            @else
+                @include('auth.customer-details')
+            @endif
 
             <!-- Password -->
             <div>

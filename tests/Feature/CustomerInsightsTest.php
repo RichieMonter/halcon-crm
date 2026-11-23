@@ -8,16 +8,60 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CustomerInsightsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_campaign_images_can_be_uploaded_replaced_and_displayed_in_the_portal(): void
+    {
+        $this->seed();
+        Storage::fake('local');
+        $staff = User::factory()->create(['role_id' => 1]);
+        $this->actingAs($staff);
+
+        $fields = [
+            'name' => 'Buen Fin',
+            'starts_on' => today()->toDateString(),
+            'ends_on' => today()->addWeek()->toDateString(),
+            'audience' => 'all',
+            'discount_percent' => 15,
+        ];
+        $campaign = MarketingCampaign::create($fields);
+        $update = route('customers.campaigns.update', $campaign);
+        $imageUrl = route('campaigns.image', $campaign);
+        $this->get(route('customers.campaigns.edit', $campaign))->assertOk()->assertSee('Agregar imagen a la campaña');
+
+        $this->post($update, $fields + ['_method' => 'PUT', 'image' => UploadedFile::fake()->create('archivo.pdf')])
+            ->assertSessionHasErrorsIn('campaign', ['image']);
+        $this->post($update, $fields + ['_method' => 'PUT', 'image' => new UploadedFile(public_path('images/portal-buen-fin.jpg'), 'buen-fin.jpg', null, null, true)])
+            ->assertSessionHasNoErrors()->assertRedirect(route('customers.index'));
+        $firstPath = $campaign->refresh()->image_path;
+        Storage::disk('local')->assertExists($firstPath);
+        $this->get($imageUrl)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+
+        $client = User::factory()->create(['role_id' => 4]);
+        $this->actingAs($client)->get(route('portal.home'))->assertOk()->assertSee($imageUrl, false);
+        $this->get($imageUrl)->assertOk();
+        $this->put($update, $fields)->assertForbidden();
+
+        $this->actingAs($staff)->post($update, $fields + ['_method' => 'PUT', 'image' => new UploadedFile(public_path('images/portal-papeleria.jpg'), 'papeleria.jpg', null, null, true)])
+            ->assertSessionHasNoErrors();
+        Storage::disk('local')->assertMissing($firstPath);
+        $replacement = $campaign->refresh()->image_path;
+        Storage::disk('local')->assertExists($replacement);
+
+        $this->delete(route('customers.campaigns.destroy', $campaign))->assertRedirect(route('customers.index'));
+        Storage::disk('local')->assertMissing($replacement);
+    }
+
     public function test_ranking_and_eligible_discounts_appear_in_the_cart(): void
     {
         $this->seed();
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->create(['role_id' => 1]));
 
         $leader = Customer::create(['name' => 'Cliente frecuente', 'preferred_discount' => 12.5]);
         $prospect = Customer::create(['name' => 'Prospecto']);
@@ -61,7 +105,7 @@ class CustomerInsightsTest extends TestCase
     public function test_sales_require_a_valid_payment_method_but_quotes_do_not(): void
     {
         $this->seed();
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->create(['role_id' => 2]));
 
         $order = Order::create(['order_number' => 'COT-PAGO', 'status' => 'pendiente']);
         $product = Product::create(['code' => 'PAGO-SRV', 'name' => 'Trabajo', 'type' => 'SERVICIO']);

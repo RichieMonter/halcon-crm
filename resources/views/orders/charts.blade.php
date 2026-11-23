@@ -7,7 +7,7 @@
                 ['label' => 'Hoy', 'values' => [$todaySales]],
                 ['label' => 'Ayer', 'values' => [$yesterdaySales]],
             ],
-            'series' => ['Ventas completadas' => '#4f46e5'],
+            'series' => ['Ventas completadas' => '#5cb9db'],
             'decimals' => 2,
         ],
         [
@@ -17,7 +17,7 @@
                 'label' => $item->product?->name ?? 'Producto',
                 'values' => [$item->total_sold],
             ])->all(),
-            'series' => ['Unidades vendidas' => '#4f46e5'],
+            'series' => ['Unidades vendidas' => '#5cb9db'],
             'empty' => 'Aún no hay productos en ventas completadas.',
         ],
         [
@@ -28,7 +28,7 @@
                 'type' => $item->type === 'INSUMO' ? 'Insumo' : 'Producto',
                 'values' => [$item->stock, max(5, $item->min_stock)],
             ])->all(),
-            'series' => ['Existencias' => '#0f766e', 'Umbral de alerta' => '#818cf8'],
+            'series' => ['Existencias' => '#5cb9db', 'Umbral de alerta' => '#f96a7c'],
             'empty' => 'No hay productos ni insumos con alerta de inventario.',
         ],
         [
@@ -38,7 +38,7 @@
                 'label' => $item->name,
                 'values' => [$item->stock],
             ])->all(),
-            'series' => ['Existencias' => '#0f766e'],
+            'series' => ['Existencias' => '#5cb9db'],
             'empty' => 'Aún no hay insumos internos en el catálogo.',
         ],
         [
@@ -48,7 +48,7 @@
                 'label' => $service,
                 'values' => [$quantity],
             ])->values()->all(),
-            'series' => ['Servicios vendidos' => '#0f766e'],
+            'series' => ['Servicios vendidos' => '#f0b25f'],
         ],
         ['view' => 'orders.print-sales-chart'],
     ];
@@ -70,7 +70,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div data-reveal-group class="grid grid-cols-1 gap-4 lg:grid-cols-2">
         @foreach ($charts as $index => $chart)
             <div class="min-w-0" x-show="{{ $index }} >= start && {{ $index }} < start + 2" @if ($index >= 2) x-cloak @endif>
                 @include($chart['view'] ?? 'orders.column-chart', $chart)

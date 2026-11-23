@@ -22,12 +22,17 @@
             @forelse ($campaigns as $campaign)
                 @php($status = $campaign->status())
                 <article class="mb-2 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm">
-                    <div>
+                    <div class="flex min-w-0 items-center gap-3">
+                        @if ($campaign->image_path)
+                            <img src="{{ route('campaigns.image', $campaign) }}" alt="" loading="lazy" class="h-14 w-20 shrink-0 rounded-md object-cover">
+                        @endif
+                        <div>
                         <h3 class="font-semibold text-slate-800">{{ $campaign->name }} <span class="ml-1 text-xs font-medium text-indigo-700">{{ $status }}</span></h3>
                         <p class="mt-1 text-xs text-slate-600">{{ $campaign->starts_on->format('d/m/Y') }} al {{ $campaign->ends_on->format('d/m/Y') }} · {{ $audiences[$campaign->audience] }} · {{ $campaign->discount_percent }} %</p>
                         @if ($campaign->ended_at)
                             <p class="mt-1 text-xs text-slate-600">Terminada el {{ $campaign->ended_at->format('d/m/Y') }}</p>
                         @endif
+                        </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <a href="{{ route('customers.campaigns.edit', $campaign) }}" class="rounded border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700">Editar</a>

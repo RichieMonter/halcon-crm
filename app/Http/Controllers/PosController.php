@@ -105,7 +105,7 @@ class PosController extends Controller
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'discount_percent' => $discountPercent,
-                'payment_method' => $completed ? $request->payment_method : null,
+                'payment_method' => $completed ? $request->payment_method : $order->payment_method,
                 'total' => $total,
                 'status' => $request->status,
                 'service_notes' => $request->service_notes,

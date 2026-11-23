@@ -20,6 +20,14 @@ class MarketingCampaign extends Model
         return $query->whereNull('ended_at')->whereDate('starts_on', '<=', $today)->whereDate('ends_on', '>=', $today);
     }
 
+    public function scopeVisibleInPortal(Builder $query, ?int $customerId): Builder
+    {
+        $eligible = $customerId !== null && in_array($customerId, Customer::rankedByPurchases()->limit(5)->get()->modelKeys(), true);
+
+        return $query->whereNull('ended_at')->whereDate('ends_on', '>=', today())
+            ->when(!$eligible, fn (Builder $campaigns) => $campaigns->where('audience', 'all'));
+    }
+
     public function status(): string
     {
         return match (true) {

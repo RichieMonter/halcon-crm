@@ -3,6 +3,7 @@
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PosController;
+use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\PrinterController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -10,14 +11,26 @@ use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('orders.index') : redirect()->route('login');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
-    return redirect()->route('orders.index');
+    return redirect()->route(auth()->user()->homeRoute());
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::get('/campanas/{campaign}/imagen', [CustomerController::class, 'campaignImage'])
+    ->middleware(['auth', 'verified'])->name('campaigns.image');
+
+Route::middleware(['auth', 'verified', 'account.role:4'])->prefix('mi-cuenta')->name('portal.')->group(function () {
+    Route::get('/', [CustomerPortalController::class, 'index'])->name('home');
+    Route::get('/catalogo', [CustomerPortalController::class, 'catalog'])->name('catalog');
+    Route::get('/cotizar', [CustomerPortalController::class, 'create'])->name('orders.new');
+    Route::post('/pedidos', [CustomerPortalController::class, 'store'])->name('orders.store');
+    Route::get('/pedidos/{order}', [CustomerPortalController::class, 'cart'])->name('orders.cart');
+    Route::put('/pedidos/{order}', [CustomerPortalController::class, 'update'])->name('orders.update');
+});
+
+Route::middleware(['auth', 'verified', 'account.role:1,2,3'])->group(function () {
     Route::get('/impresoras', [PrinterController::class, 'index'])->name('printers.index');
     Route::post('/impresoras/{printer}/lecturas', [PrinterController::class, 'store'])->name('printers.readings.store');
 
@@ -38,10 +51,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
 
     // Módulo de Punto de Venta (POS) / Carrito
-    Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
-    Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
-
-
     //Modulo Pantalla de venta
     Route::get('/orders/{order}/pos', [PosController::class, 'index'])->name('orders.pos');
     Route::post('/orders/{order}/pos', [PosController::class, 'update'])->name('orders.pos.update');

@@ -11,13 +11,38 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class OrderController extends Controller
 {
+    private const SORTABLE_COLUMNS = [
+        'folio' => 'Folio / Cliente',
+        'tipo' => 'Tipo de orden',
+        'precio' => 'Precio ($)',
+        'interes' => 'Interés',
+        'fecha' => 'Fecha de creación',
+        'estado' => 'Estatus',
+    ];
+
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $filters = $request->validate([
+            'search' => 'nullable|string|max:150',
+            'estado' => 'nullable|in:pendiente,completado,cancelado',
+            'interes' => 'nullable|in:ALTO,MEDIO,BAJO',
+            'desde' => 'nullable|date_format:Y-m-d',
+            'hasta' => ['nullable', 'date_format:Y-m-d', Rule::when($request->filled('desde'), 'after_or_equal:desde')],
+            'orden' => ['nullable', Rule::in(array_keys(self::SORTABLE_COLUMNS))],
+            'direccion' => 'nullable|in:asc,desc',
+        ], [
+            'desde.date_format' => 'Ingresa una fecha inicial válida.',
+            'hasta.date_format' => 'Ingresa una fecha final válida.',
+            'hasta.after_or_equal' => 'La fecha final debe coincidir con la inicial o ser posterior.',
+        ]);
+        $sortColumns = self::SORTABLE_COLUMNS;
+        $sort = $filters['orden'] ?? 'fecha';
+        $direction = $filters['direccion'] ?? ($sort === 'fecha' ? 'desc' : 'asc');
     
         // Ventas del día y comparativa vs ayer
         $todaySales = Order::where('status', 'completado')
@@ -105,18 +130,30 @@ class OrderController extends Controller
             ->sortDesc();
     
         // Consulta de órdenes con filtro de búsqueda individual
-        $orders = Order::with('customer', 'user')
-            ->when($search, function($query, $search) {
-                $query->where('invoice_number', 'LIKE', "%{$search}%")
-                      ->orWhere('order_number', 'LIKE', "%{$search}%")
-                      ->orWhere('order_type', 'LIKE', "%{$search}%")
-                      ->orWhereHas('customer', function($q) use ($search) {
-                          $q->where('name', 'LIKE', "%{$search}%")
-                            ->orWhere('company_name', 'LIKE', "%{$search}%");
-                      });
-            })
-            ->latest()
-            ->get();
+        $ordersQuery = Order::with('customer', 'user')
+            ->when($filters['estado'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['interes'] ?? null, fn ($query, $interest) => $query->where('interest_level', $interest))
+            ->when($filters['desde'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($filters['hasta'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '<=', $date));
+
+        foreach (preg_split('/\s+/', trim($filters['search'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) as $term) {
+            $pattern = '%'.$term.'%';
+            $ordersQuery->where(fn ($query) => $query->whereLike('invoice_number', $pattern)
+                ->orWhereLike('order_number', $pattern)
+                ->orWhereLike('order_type', $pattern)
+                ->orWhereHas('customer', fn ($customer) => $customer->whereLike('name', $pattern)
+                    ->orWhereLike('company_name', $pattern)));
+        }
+
+        match ($sort) {
+            'folio' => $ordersQuery->orderByRaw('COALESCE(invoice_number, order_number) '.$direction),
+            'tipo' => $ordersQuery->orderBy('order_type', $direction),
+            'precio' => $ordersQuery->orderBy('total', $direction),
+            'interes' => $ordersQuery->orderByRaw("CASE interest_level WHEN 'BAJO' THEN 1 WHEN 'MEDIO' THEN 2 WHEN 'ALTO' THEN 3 ELSE 0 END ".$direction),
+            'estado' => $ordersQuery->orderByRaw("CASE status WHEN 'pendiente' THEN 1 WHEN 'completado' THEN 2 ELSE 3 END ".$direction),
+            default => $ordersQuery->orderBy('created_at', $direction),
+        };
+        $orders = $ordersQuery->orderBy('id', $direction)->paginate(25)->appends($filters)->fragment('cotizaciones');
     
         $customers = Customer::orderBy('name')->get();
     
@@ -126,6 +163,10 @@ class OrderController extends Controller
     
         return view('orders.index', compact(
             'orders', 
+            'filters',
+            'sortColumns',
+            'sort',
+            'direction',
             'customers', 
             'todaySales', 
             'yesterdaySales',

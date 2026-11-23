@@ -8,7 +8,7 @@
         <p class="mt-2 text-sm text-slate-600">Semáforo: bajo de 0 a 30 %, medio de 31 a 70 % y alto de 71 a 100 %.</p>
     </header>
 
-    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+    <div data-reveal-group class="grid grid-cols-1 gap-5 md:grid-cols-2">
         @foreach ($printers as $key => $printer)
             @php($formErrors = $errors->getBag($key))
             <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -30,7 +30,7 @@
                             <div class="rounded-lg bg-slate-50 p-3">
                                 <dt class="text-sm font-semibold text-slate-800">{{ \App\Models\PrinterReading::COLORS[$color] }}</dt>
                                 <dd class="mt-1">
-                                    <span class="text-sm font-bold" style="color: {{ $reading->indicatorColor() }}">{{ round($reading->level, 2) }} % · {{ $reading->status() }}</span>
+                                    <span class="kopion-chart-value text-sm font-bold" style="--kopion-data-color: {{ $reading->indicatorColor() }}">{{ round($reading->level, 2) }} % · {{ $reading->status() }}</span>
                                     <div aria-hidden="true" class="mt-1 h-2 overflow-hidden rounded-full bg-slate-200">
                                         <div class="h-full rounded-full" style="width: {{ $reading->level }}%; background-color: {{ $reading->indicatorColor() }}"></div>
                                     </div>

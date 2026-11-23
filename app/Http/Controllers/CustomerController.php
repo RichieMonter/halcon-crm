@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\MarketingCampaign;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CustomerController extends Controller
 {
@@ -43,9 +47,59 @@ class CustomerController extends Controller
 
     public function updateCampaign(Request $request, MarketingCampaign $campaign)
     {
-        $campaign->update($this->validateCampaign($request));
+        $data = $this->validateCampaign($request);
+        $upload = $request->validateWithBag('campaign', [
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'image.image' => 'Selecciona una imagen válida.',
+            'image.mimes' => 'La imagen debe estar en formato JPG, PNG o WebP.',
+            'image.max' => 'La imagen debe pesar como máximo 2 MB.',
+            'image.uploaded' => 'La imagen no se pudo subir. Comprueba que pese como máximo 2 MB.',
+        ])['image'] ?? null;
+
+        if (!$upload) {
+            $campaign->update($data);
+
+            return redirect()->route('customers.index')->with('success', 'Campaña actualizada.');
+        }
+
+        $path = $upload->store('campaign-images', 'local');
+        if (!$path) {
+            throw ValidationException::withMessages(['image' => 'No se pudo guardar la imagen. Vuelve a intentarlo.'])->errorBag('campaign');
+        }
+
+        try {
+            $previous = DB::transaction(function () use ($campaign, $data, $path) {
+                $locked = MarketingCampaign::whereKey($campaign->id)->lockForUpdate()->firstOrFail();
+                $previous = $locked->image_path;
+                $locked->fill($data)->forceFill(['image_path' => $path])->save();
+
+                return $previous;
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($path);
+            throw $exception;
+        }
+        if ($previous) {
+            Storage::disk('local')->delete($previous);
+        }
 
         return redirect()->route('customers.index')->with('success', 'Campaña actualizada.');
+    }
+
+    public function campaignImage(Request $request, MarketingCampaign $campaign)
+    {
+        $account = $request->user();
+        if ((int) $account->role_id === User::CUSTOMER_ROLE) {
+            abort_unless(MarketingCampaign::visibleInPortal($account->customer_id)->whereKey($campaign->id)->exists(), 404);
+        } else {
+            abort_unless(isset(User::STAFF_ROLES[$account->role_id]), 403);
+        }
+
+        $disk = Storage::disk('local');
+        abort_unless($campaign->image_path && $disk->exists($campaign->image_path), 404);
+
+        return $disk->response($campaign->image_path, null, ['Cache-Control' => 'private, no-store']);
     }
 
     public function endCampaign(MarketingCampaign $campaign)
@@ -59,7 +113,16 @@ class CustomerController extends Controller
 
     public function destroyCampaign(MarketingCampaign $campaign)
     {
-        $campaign->delete();
+        $path = DB::transaction(function () use ($campaign) {
+            $locked = MarketingCampaign::whereKey($campaign->id)->lockForUpdate()->firstOrFail();
+            $path = $locked->image_path;
+            $locked->delete();
+
+            return $path;
+        });
+        if ($path) {
+            Storage::disk('local')->delete($path);
+        }
 
         return redirect()->route('customers.index')->with('success', 'Campaña eliminada.');
     }

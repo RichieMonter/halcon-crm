@@ -32,7 +32,11 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('verification.notice');
         }
 
-        return redirect()->intended(route('orders.index', absolute: false));
+        $home = $request->user()->homeRoute();
+
+        return $home === 'portal.home'
+            ? redirect()->route($home)
+            : redirect()->intended(route($home, absolute: false));
     }
 
     /**

@@ -34,7 +34,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('orders.index', absolute: false));
+        $response->assertRedirect(route('portal.home'));
     }
 
     public function test_unverified_users_are_redirected_to_email_verification(): void

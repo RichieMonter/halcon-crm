@@ -1,30 +1,36 @@
-@extends('layouts.app')
+@extends(($isPortal ?? false) ? 'portal.layout' : 'layouts.app')
 
 @section('content')
+@php
+    $isPortal = $isPortal ?? false;
+    $submitUrl = $isPortal
+        ? ($order->exists ? route('portal.orders.update', $order) : route('portal.orders.store'))
+        : route('orders.pos.update', $order);
+@endphp
 <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6"
-     x-data="posApp(@js($products), @js($order), @js($isReadOnly), @js($printers), @js($recommendations))">
+     x-data="posApp(@js($products), @js($cartOrder ?? $order), @js($isReadOnly), @js($printers), @js($recommendations), @js($isPortal), @js($submitUrl))">
     
     <!-- ENCABEZADO -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 mb-6 border-b border-gray-100 gap-4">
         <div>
-            <h2 class="text-xl font-extrabold text-gray-800">Punto de Venta / Carrito de Cotización</h2>
+            <h2 class="text-xl font-extrabold text-gray-800">{{ $isPortal ? 'Carrito de cotización' : 'Punto de Venta / Carrito de Cotización' }}</h2>
             <p class="text-xs text-gray-500">
-                Folio: <span class="font-bold text-indigo-600">#{{ $order->invoice_number ?? $order->order_number }}</span>
+                <span class="font-bold text-indigo-600">{{ $order->exists ? 'Folio: #'.($order->invoice_number ?? $order->order_number) : 'Nueva cotización' }}</span>
                 @if($isReadOnly)
-                    <span class="ml-2 bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">VENTA COMPLETADA (ESTÁTICA)</span>
+                    <span class="ml-2 bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">{{ ucfirst($order->status) }}</span>
                 @endif
             </p>
         </div>
 
-        <a href="{{ route('orders.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-4 py-2 rounded-lg transition border border-gray-300">
-            ← Volver a Órdenes
+        <a href="{{ $isPortal ? route('portal.home').'#mis-pedidos' : route('orders.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-4 py-2 rounded-lg transition border border-gray-300">
+            {{ $isPortal ? '← Volver a Mis pedidos' : '← Volver a Órdenes' }}
         </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- COLUMNA IZQUIERDA: CATÁLOGO -->
-        <div class="lg:col-span-7 space-y-4" x-show="!isReadOnly">
+        <div class="min-w-0 space-y-4 lg:col-span-7" x-show="!isReadOnly">
             <div class="relative">
                 <input type="text" x-model="search" placeholder="🔍 Buscar Producto o Servicio..." 
                        class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
@@ -34,7 +40,7 @@
             <div class="flex items-center space-x-2 overflow-x-auto pb-2">
                 <button @click="selectedCategory = ''" :class="selectedCategory === '' ? 'bg-indigo-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3.5 py-1.5 rounded-full text-xs transition border">Todas</button>
                 @foreach($categories as $cat)
-                    <button @click="selectedCategory = '{{ $cat }}'" :class="selectedCategory === '{{ $cat }}' ? 'bg-indigo-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3.5 py-1.5 rounded-full text-xs transition border">{{ $cat }}</button>
+                    <button @click="selectedCategory = @js($cat)" :class="selectedCategory === @js($cat) ? 'bg-indigo-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3.5 py-1.5 rounded-full text-xs transition border">{{ $cat }}</button>
                 @endforeach
             </div>
 
@@ -45,7 +51,7 @@
                         <div>
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] font-bold text-indigo-600 uppercase" x-text="product.code"></span>
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" :class="product.stock <= 5 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'">
+                                <span x-show="!isPortal || product.type === 'PRODUCTO'" class="text-[10px] font-bold px-1.5 py-0.5 rounded" :class="product.stock <= 5 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'">
                                     Stock: <span x-text="product.stock"></span>
                                 </span>
                             </div>
@@ -59,11 +65,11 @@
         </div>
 
         <!-- COLUMNA DERECHA: RESUMEN Y CARRITO -->
-        <div :class="isReadOnly ? 'lg:col-span-12' : 'lg:col-span-5'" class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col justify-between space-y-4">
+        <div :class="isReadOnly ? 'lg:col-span-12' : 'lg:col-span-5'" class="min-w-0 bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col justify-between space-y-4">
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Cliente:</label>
-                    <select x-model="selectedCustomerId" @change="clearSuggestedDiscount()" :disabled="isReadOnly" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm">
+                    <select x-model="selectedCustomerId" @change="clearSuggestedDiscount()" :disabled="isReadOnly || isPortal" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm">
                         @foreach($customers as $cust)
                             <option value="{{ $cust->id }}">{{ ($cust->company_name && strtoupper($cust->company_name) !== 'NA') ? $cust->company_name : $cust->name }}</option>
                         @endforeach
@@ -71,7 +77,7 @@
                 </div>
 
                 <!-- TABLA CARRITO -->
-                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm max-h-[300px] overflow-y-auto">
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm max-h-[300px] overflow-auto">
                     <table class="w-full text-left text-xs">
                         <thead class="bg-gray-100 border-b text-gray-600 uppercase font-bold">
                             <tr>
@@ -82,6 +88,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
+                            <tr x-show="cart.length === 0"><td colspan="4" class="p-3 text-gray-500">Agrega productos o servicios para cotizar.</td></tr>
                             <template x-for="(item, index) in cart" :key="index">
                                 <tr>
                                     <td class="p-2">
@@ -90,6 +97,7 @@
                                     <td class="p-2">
                                         <p class="font-bold text-gray-800" x-text="item.name"></p>
                                         <p class="text-[10px] text-gray-400">$<span x-text="parseFloat(item.price).toFixed(2)"></span> c/u</p>
+                                        @unless ($isPortal)
                                         <div x-show="item.isPrinting" class="mt-2 space-y-1">
                                             <label class="block text-xs">Impresora
                                                 <select x-model="item.printer" @change="item.print_mode = printers[item.printer]?.colors.length === 1 ? 'mono' : ''" :disabled="isReadOnly" class="mt-1 block w-full rounded border p-1">
@@ -109,6 +117,7 @@
                                             <p class="text-[10px] text-slate-600">La cantidad equivale a páginas impresas.</p>
                                             <button type="button" x-show="!isReadOnly" @click="addToCart(products.find(product => product.id === item.id), true)" class="text-[10px] font-semibold text-indigo-700 hover:underline">+ Otra línea de impresión</button>
                                         </div>
+                                        @endunless
                                     </td>
                                     <td class="p-2 text-right font-bold text-gray-900">
                                         $<span x-text="(item.price * item.quantity).toFixed(2)"></span>
@@ -122,10 +131,12 @@
                     </table>
                 </div>
 
+                @unless ($isPortal)
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Notas del Servicio:</label>
                     <textarea x-model="serviceNotes" :disabled="isReadOnly" rows="2" class="w-full bg-white border rounded-lg p-2 text-xs"></textarea>
                 </div>
+                @endunless
             </div>
 
             <!-- RESUMEN DE PAGOS CON DESGLOSE DE IVA -->
@@ -139,6 +150,7 @@
                         <span>IVA (16% Inc.):</span>
                         <span class="font-bold">$<span x-text="iva.toFixed(2)"></span></span>
                     </div>
+                    @unless ($isPortal)
                     <div class="flex justify-between text-gray-600 items-center" x-show="!isReadOnly">
                         <label for="discount-percent">Descuento (%)</label>
                         <input id="discount-percent" type="number" step="0.01" min="0" max="100" x-model.number="discountPercent" @input="suggestionApplied = false; updateTotals()" @change="discountPercent = Math.min(100, Math.max(0, Number(discountPercent) || 0)); updateTotals()" class="w-20 border rounded px-1.5 py-0.5 text-right font-bold">
@@ -147,6 +159,7 @@
                         <span>Importe descontado</span>
                         <span class="font-bold">−$<span x-text="discountAmount.toFixed(2)"></span></span>
                     </div>
+                    @endunless
                     <div class="flex justify-between text-base font-extrabold text-gray-900 border-t pt-1.5">
                         <span>TOTAL:</span>
                         <span class="text-indigo-600">$<span x-text="total.toFixed(2)"></span></span>
@@ -154,6 +167,7 @@
                 </div>
 
                 @unless ($isReadOnly)
+                    @unless ($isPortal)
                     <aside x-show="customerRecommendations.length > 0" x-cloak class="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
                         <h3 class="text-sm font-bold text-amber-900"><span aria-hidden="true">💡</span> Descuentos sugeridos</h3>
                         <template x-for="suggestion in customerRecommendations" :key="suggestion.label">
@@ -163,10 +177,11 @@
                             </div>
                         </template>
                     </aside>
+                    @endunless
 
                     <label for="payment-method" class="block text-sm font-semibold text-slate-800">Método de pago
                         <select id="payment-method" x-model="paymentMethod" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-sm">
-                            <option value="">Selecciona al finalizar la venta</option>
+                            <option value="">{{ $isPortal ? 'Selecciona un método de pago' : 'Selecciona al finalizar la venta' }}</option>
                             @foreach ($paymentMethods as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
@@ -176,24 +191,32 @@
                     <p class="text-sm text-slate-700"><strong>Método de pago:</strong> {{ $paymentMethods[$order->payment_method] ?? 'Sin registro' }}</p>
                 @endunless
 
+                @if ($isPortal)
+                    @unless ($isReadOnly)
+                        <button type="button" @click="submitQuote()" :disabled="saving" class="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Guardar cotización</button>
+                    @endunless
+                @else
                 <div class="grid grid-cols-2 gap-2" x-show="!isReadOnly">
                     <button @click="submitPos('pendiente')" class="w-full bg-amber-500 text-white font-bold text-xs py-2.5 rounded-lg shadow">Guardar Pendiente</button>
                     <button @click="submitPos('completado')" class="w-full bg-emerald-600 text-white font-bold text-xs py-2.5 rounded-lg shadow">Cobrar / Finalizar</button>
                 </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
 <script>
-function posApp(products, initialOrder, isReadOnly, printers, recommendations) {
+function posApp(products, initialOrder, isReadOnly, printers, recommendations, isPortal, submitUrl) {
     return {
         products: products,
         printers: printers,
         search: '',
         selectedCategory: '',
-        selectedCustomerId: initialOrder ? initialOrder.customer_id : '',
-        paymentMethod: '',
+        selectedCustomerId: initialOrder.customer_id ?? @js($isPortal ? $customers->first()->id : ''),
+        paymentMethod: initialOrder.payment_method ?? '',
+        saving: false,
+        isPortal,
         suggestionApplied: false,
         serviceNotes: initialOrder ? initialOrder.service_notes : '',
         cart: [],
@@ -212,8 +235,8 @@ function posApp(products, initialOrder, isReadOnly, printers, recommendations) {
                     const prodMatch = products.find(p => p.id === item.product_id);
                     return {
                         id: item.product_id,
-                        name: item.product ? item.product.name : 'Producto',
-                        price: parseFloat(item.unit_price),
+                        name: item.product?.name ?? prodMatch?.name ?? 'Producto',
+                        price: parseFloat(isPortal && !isReadOnly && prodMatch ? prodMatch.price : item.unit_price),
                         quantity: parseInt(item.quantity),
                         stock: prodMatch ? prodMatch.stock : 9999,
                         type: prodMatch ? prodMatch.type : 'PRODUCTO',
@@ -227,8 +250,11 @@ function posApp(products, initialOrder, isReadOnly, printers, recommendations) {
         },
 
         get filteredProducts() {
+            const normalize = value => (value ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+            const terms = normalize(this.search).trim().split(/\s+/);
             return this.products.filter(p => {
-                const matchesSearch = p.name.toLowerCase().includes(this.search.toLowerCase()) || p.code.toLowerCase().includes(this.search.toLowerCase());
+                const description = normalize([p.name, p.code, p.category].join(' '));
+                const matchesSearch = terms.every(term => description.includes(term));
                 const matchesCategory = this.selectedCategory === '' || p.category === this.selectedCategory;
                 return matchesSearch && matchesCategory;
             });
@@ -304,7 +330,9 @@ function posApp(products, initialOrder, isReadOnly, printers, recommendations) {
             const rawSubtotal = this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const subtotalCents = Math.round((rawSubtotal + Number.EPSILON) * 100);
             const percentage = Math.min(100, Math.max(0, Number(this.discountPercent) || 0));
-            const discountCents = Math.round(subtotalCents * Math.round(percentage * 100) / 10000);
+            const discountCents = isPortal && initialOrder.discount_percent == null
+                ? Math.min(subtotalCents, Math.round(Number(initialOrder.discount || 0) * 100))
+                : Math.round(subtotalCents * Math.round(percentage * 100) / 10000);
             this.discountAmount = this.isReadOnly
                 ? Number(initialOrder.discount || 0)
                 : discountCents / 100;
@@ -324,7 +352,7 @@ function posApp(products, initialOrder, isReadOnly, printers, recommendations) {
                 return;
             }
 
-            fetch(`/orders/${initialOrder.id}/pos`, {
+            fetch(submitUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -356,6 +384,35 @@ function posApp(products, initialOrder, isReadOnly, printers, recommendations) {
                 }
             })
             .catch(() => alert('No se pudo contactar al servidor para guardar la venta.'));
+        },
+
+        async submitQuote() {
+            if (this.saving || this.isReadOnly) return;
+            if (this.cart.length && !this.paymentMethod) {
+                alert('Selecciona el método de pago para guardar la cotización.');
+                return;
+            }
+            const quantities = Object.fromEntries(this.cart.map(item => [item.id, 0]));
+            this.cart.forEach(item => quantities[item.id] += item.quantity);
+            this.saving = true;
+            try {
+                const response = await fetch(submitUrl, {
+                    method: initialOrder.id ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': @js(csrf_token())
+                    },
+                    body: JSON.stringify({quantities, payment_method: this.paymentMethod})
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'No se pudo guardar la cotización.');
+                window.location.href = data.redirect;
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                this.saving = false;
+            }
         }
     }
 }

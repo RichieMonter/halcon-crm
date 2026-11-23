@@ -7,6 +7,7 @@
 @endif
 
 <form method="POST" action="{{ $campaign ? route('customers.campaigns.update', $campaign) : route('customers.campaigns.store') }}"
+    enctype="multipart/form-data"
     class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
     @csrf
     @if ($campaign)
@@ -35,5 +36,19 @@
         <input type="number" name="discount_percent" value="{{ old('discount_percent', $campaign?->discount_percent) }}" min="1" max="100" step="0.01" required
             class="mt-1 block w-full rounded-lg border border-slate-300 p-2">
     </label>
+    @if ($campaign)
+        <div class="space-y-2 sm:col-span-2 xl:col-span-4">
+            @if ($campaign->image_path)
+                <img src="{{ route('campaigns.image', $campaign) }}" alt="Imagen actual de la campaña"
+                    class="h-28 max-w-xs rounded-lg border border-slate-200 object-contain">
+            @endif
+            <label for="campaign-image" class="block text-sm font-medium text-slate-700">
+                {{ $campaign->image_path ? 'Reemplazar imagen de la campaña' : 'Agregar imagen a la campaña' }}
+            </label>
+            <input id="campaign-image" type="file" name="image" accept="image/jpeg,image/png,image/webp"
+                class="block w-full max-w-md rounded-lg border border-slate-300 p-2 text-sm">
+            <p class="text-xs text-slate-500">JPG, PNG o WebP. Máximo 2 MB.</p>
+        </div>
+    @endif
     <button class="justify-self-start rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white sm:col-span-2 xl:col-span-4">{{ $campaign ? 'Guardar cambios' : 'Guardar campaña' }}</button>
 </form>

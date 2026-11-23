@@ -2,7 +2,7 @@
 
 @section('content')
     <!-- TARJETAS DE MÉTRICAS ESTILO FIGMA -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div data-reveal-group class="kopion-metrics grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         
         <!-- 1. Ventas del Día -->
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
@@ -93,11 +93,11 @@
     @include('orders.charts')
 
     <!-- TABLA COMPLETA DE COTIZACIONES -->
-    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6" x-data="{ openModal: false, editModal: false, currentOrder: {} }">
+    <div id="cotizaciones" class="scroll-mt-32 bg-white rounded-xl shadow-md border border-gray-200 p-6" x-data="{ openModal: false, editModal: false, currentOrder: {} }">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
                 <h2 class="text-xl font-extrabold text-gray-800">Cotizaciones y prospectos pendientes:</h2>
-                <p class="text-xs text-gray-500">Listado general de pedidos creados en el sistema</p>
+                <p class="text-xs text-gray-500">{{ $orders->total() }} {{ $orders->total() === 1 ? 'resultado' : 'resultados' }} · {{ $pendingOrdersCount }} pendientes en total</p>
             </div>
             
             <button @click="openModal = true" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow transition flex items-center">
@@ -106,27 +106,25 @@
             </button>
         </div>
 
-        <!-- BUSCADOR MODULAR DE ÓRDENES -->
-        <form action="{{ route('orders.index') }}" method="GET" class="mb-6 flex gap-2">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="🔍 Filtrar por folio (COT-0001), cliente o tipo de orden..." 
-                   class="w-full md:w-1/3 bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
-            <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg text-xs font-bold transition">Filtrar</button>
-            @if(request('search'))
-                <a href="{{ route('orders.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2.5 rounded-lg text-xs font-bold flex items-center">Limpiar</a>
-            @endif
-        </form>
+        @include('orders.filters')
 
         <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
             <table class="w-full text-left border-collapse">
                 <thead class="sticky top-0 bg-gray-50 z-10">
                     <tr class="border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        <th class="py-3 px-4">Folio / Cliente</th>
-                        <th class="py-3 px-4">Tipo de Orden</th>
-                        <th class="py-3 px-4">Precio ($)</th>
-                        <th class="py-3 px-4">Interés</th>
-                        <th class="py-3 px-4">Fecha Creación</th>
-                        <th class="py-3 px-4">Estatus</th>
-                        <th class="py-3 px-4 text-center">Acción</th>
+                        @foreach ($sortColumns as $column => $label)
+                            @php($nextDirection = $sort === $column && $direction === 'asc' ? 'desc' : 'asc')
+                            <th scope="col" class="whitespace-nowrap px-4 py-3"
+                                @if ($sort === $column) aria-sort="{{ $direction === 'asc' ? 'ascending' : 'descending' }}" @endif>
+                                <a href="{{ route('orders.index', array_replace($filters, ['orden' => $column, 'direccion' => $nextDirection])) }}#cotizaciones"
+                                    aria-label="Ordenar por {{ $label }} en sentido {{ $nextDirection === 'asc' ? 'ascendente' : 'descendente' }}"
+                                    class="inline-flex items-center gap-1 hover:text-indigo-700 {{ $sort === $column ? 'text-indigo-700' : '' }}">
+                                    {{ $label }}
+                                    <span aria-hidden="true">{{ $sort === $column ? ($direction === 'asc' ? '↑' : '↓') : '↕' }}</span>
+                                </a>
+                            </th>
+                        @endforeach
+                        <th scope="col" class="py-3 px-4 text-center">Acción</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-sm">
@@ -179,13 +177,14 @@
                     @empty
                         <tr>
                             <td colspan="7" class="py-8 text-center text-gray-400 text-sm">
-                                No hay cotizaciones registradas todavía. ¡Crea la primera con el botón de arriba!
+                                No hay cotizaciones o pedidos que coincidan con los filtros.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $orders->links() }}</div>
 
         <!-- MODAL DE NUEVA COTIZACIÓN -->
         <div x-show="openModal" class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4" x-cloak>

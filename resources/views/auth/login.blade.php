@@ -127,4 +127,7 @@
             </div>
         @endif
     </div>
+    <div class="mt-4 text-center">
+        <a href="{{ route('staff.register') }}" class="text-xs font-semibold text-indigo-700 hover:underline">Registrar cuenta de personal</a>
+    </div>
 </x-guest-layout>

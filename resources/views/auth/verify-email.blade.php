@@ -23,6 +23,10 @@
             <div class="mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 text-center font-medium">
                 Se ha enviado un nuevo enlace de verificación a tu correo electrónico.
             </div>
+        @elseif (session('status') === 'verification-delivery-failed')
+            <p role="alert" class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                Tu cuenta ya se creó. Hubo un problema al enviar el correo. Puedes reenviarlo aquí.
+            </p>
         @endif
 
         <div class="space-y-4">
