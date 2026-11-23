@@ -41,6 +41,7 @@ class RegistrationTest extends TestCase
         $response->assertRedirect(route('verification.notice', absolute: false));
 
         $user = User::where('email', 'test@example.com')->firstOrFail();
+        $this->assertEquals(4, $user->role_id);
         $this->assertFalse($user->hasVerifiedEmail());
         Notification::assertSentTo($user, VerifyEmail::class);
     }
