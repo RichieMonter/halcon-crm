@@ -32,5 +32,11 @@
     "Server Error": "Error del servidor",
     "Service Unavailable": "Servicio no disponible",
     "Go Home": "Ir al inicio",
-    "Unauthorized": "Acceso no autorizado"
+    "Unauthorized": "Acceso no autorizado",
+    "Pagination Navigation": "Navegación entre páginas",
+    "Showing": "Mostrando",
+    "to": "a",
+    "of": "de",
+    "results": "resultados",
+    "Go to page :page": "Ir a la página :page"
 }
